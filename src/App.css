@@ -206,7 +206,9 @@ body {
 /* ── Race entry layout ── */
 .action-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
 .race-info-grid { display: grid; grid-template-columns: 1fr 1fr 160px 1fr; gap: 14px; }
-.driver-tables-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.driver-tables-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; align-items: start; }
+.driver-tables-grid > .card { height: 100%; display: flex; flex-direction: column; }
+.driver-tables-grid > .card .table-scroll { flex: 1; }
 .money-breakdown-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
 .bonus-grid { display: grid; grid-template-columns: 160px 1fr; gap: 14px; align-items: end; }
 .table-scroll { overflow-x: auto; }
