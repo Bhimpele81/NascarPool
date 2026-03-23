@@ -67,18 +67,27 @@ export default function RaceEntry({ week, onSave, onBack }) {
     if (markComplete) onBack();
   }
 
+  function handleAutoUpdate() {
+    alert('Auto Update Results — coming soon! This will pull live race results from the NASCAR API.');
+  }
+
   const result = computeResult(form);
 
   return (
     <div>
+      {/* Action bar */}
       <div className="action-bar">
         <button className="btn btn-ghost" onClick={onBack}>← Back</button>
         <button className="btn btn-secondary" onClick={() => handleSave(false)}>Save Draft</button>
         <button className="btn btn-green" onClick={() => handleSave(true)}>✓ Complete</button>
         {saved && <span style={{ color: 'var(--green)', fontWeight: 700 }}>Saved!</span>}
-        {form.completed && <span className="badge badge-green" style={{ marginLeft: 'auto' }}>Completed</span>}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+          {form.completed && <span className="badge badge-green">Completed</span>}
+          <button className="btn btn-primary" onClick={handleAutoUpdate}>⚡ Auto Update Results</button>
+        </div>
       </div>
 
+      {/* Race Info */}
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="card-header"><span className="card-title">Race Info</span></div>
         <div className="card-body">
