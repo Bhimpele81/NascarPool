@@ -62,11 +62,11 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-inner">
-          <div className="header-brand">
-            <img src="/logo.webp" alt="NASCAR" style={{ height: 36, objectFit: 'contain' }} />
-            <span className="brand-title">NASCAR Pool</span>
-            <span className="brand-sub">Bill vs Don · 2026</span>
-          </div>
+         <div className="header-brand" onClick={() => setPage('dashboard')} style={{ cursor: 'pointer' }}>
+  <img src="/logo.webp" alt="NASCAR" style={{ height: 36, objectFit: 'contain' }} />
+  <span className="brand-title">NASCAR Pool</span>
+  <span className="brand-sub">Bill vs Don · 2026</span>
+</div>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             {syncing && <span style={{ fontSize:11, color:'var(--text-muted)' }}>Saving...</span>}
             <nav className="header-nav">
