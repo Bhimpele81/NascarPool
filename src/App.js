@@ -5,22 +5,21 @@ import Dashboard from './pages/Dashboard';
 import RaceEntry from './pages/RaceEntry';
 import History from './pages/History';
 import Rules from './pages/Rules';
+import DraftPicks from './pages/DraftPicks';
 import './App.css';
 
 export default function App() {
   const [page, setPage] = useState('dashboard');
-  const [data, setData] = useState(null); // null = loading
+  const [data, setData] = useState(null);
   const [editingWeekId, setEditingWeekId] = useState(null);
   const [syncing, setSyncing] = useState(false);
 
-  // Load from Supabase on mount
   useEffect(() => {
     loadData().then(d => {
       setData({ ...d, weeks: recalcRunningTotals(d.weeks) });
     });
   }, []);
 
-  // Save to Supabase on every change
   useEffect(() => {
     if (!data) return;
     setSyncing(true);
@@ -52,7 +51,6 @@ export default function App() {
 
   const currentWeek = data?.weeks.find(w => w.id === editingWeekId);
 
-  // Loading screen
   if (!data) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', flexDirection:'column', gap:16, background:'var(--navy)', color:'var(--text-muted)' }}>
       <div style={{ fontSize: 36 }}>🏁</div>
@@ -74,6 +72,7 @@ export default function App() {
             <nav className="header-nav">
               <button className={page==='dashboard' ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('dashboard')}>Dashboard</button>
               <button className={page==='history'   ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('history')}>History</button>
+              <button className={page==='picks'     ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('picks')}>Draft Picks</button>
               <button className={page==='rules'     ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('rules')}>Rules</button>
             </nav>
           </div>
@@ -83,6 +82,7 @@ export default function App() {
         {page==='dashboard' && <Dashboard weeks={data.weeks} onAddWeek={addWeek} onEditWeek={editWeek} onDeleteWeek={deleteWeek} />}
         {page==='entry' && currentWeek && <RaceEntry week={currentWeek} onSave={saveWeek} onBack={() => setPage('dashboard')} />}
         {page==='history' && <History weeks={data.weeks} onEditWeek={editWeek} />}
+        {page==='picks' && <DraftPicks weeks={data.weeks} />}
         {page==='rules' && <Rules />}
       </main>
     </div>
