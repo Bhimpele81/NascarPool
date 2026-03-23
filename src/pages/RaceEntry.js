@@ -57,15 +57,19 @@ export default function RaceEntry({ week, onSave, onBack }) {
     setSaved(false);
   }
 
-  function handleSave(markComplete) {
+function handleSave(markComplete) {
+  if (markComplete) {
     const allErrors = [...validateTeam(form.billDrivers, 'Bill'), ...validateTeam(form.donDrivers, 'Don')];
     setErrors(allErrors);
-    if (allErrors.length > 0 && markComplete) return;
-    onSave({ ...form, result: computeResult(form), completed: markComplete || form.completed });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-    if (markComplete) onBack();
+    if (allErrors.length > 0) return;
+  } else {
+    setErrors([]);
   }
+  onSave({ ...form, result: computeResult(form), completed: markComplete || form.completed });
+  setSaved(true);
+  setTimeout(() => setSaved(false), 2000);
+  if (markComplete) onBack();
+}
 
   const result = computeResult(form);
 
