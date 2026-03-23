@@ -94,7 +94,7 @@ export default function Dashboard({ weeks, onAddWeek, onEditWeek, onDeleteWeek }
                     <td>
                       {w.completed
                         ? <span className="badge badge-green">Done</span>
-                        : <span className="badge badge-yellow">Draft</span>}
+                        : <span className="badge badge-yellow">In Progress</span>}
                     </td>
                     <td className="num">
                       {amt != null ? (
