@@ -95,11 +95,17 @@ export default function RaceEntry({ week, onSave, onBack }) {
             </div>
             <div>
               <label className="form-label">First Pick</label>
-              <select className="form-select" value={form.firstPick || ''} onChange={e => updateMeta('firstPick', e.target.value)}>
-                <option value="">— Select —</option>
-                <option value="Bill">Bill</option>
-                <option value="Don">Don</option>
-              </select>
+<input
+  className="form-input"
+  list={`drivers-${team}-${i}`}
+  placeholder="— Driver —"
+  value={d.name}
+  onChange={e => onUpdate(i, 'name', e.target.value)}
+  style={{ fontSize: 13, minWidth: 160 }}
+/>
+<datalist id={`drivers-${team}-${i}`}>
+  {NASCAR_DRIVERS.map(n => <option key={n} value={n} />)}
+</datalist>
             </div>
             <div>
               <label className="form-label">Notes</label>
