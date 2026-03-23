@@ -67,7 +67,7 @@ export default function App() {
           <div className="header-brand">
             <span className="flag-icon">🏁</span>
             <span className="brand-title">NASCAR Pool</span>
-            <span className="brand-sub">Bill vs Don · 2025</span>
+            <span className="brand-sub">Bill vs Don · 2026</span>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             {syncing && <span style={{ fontSize:11, color:'var(--text-muted)' }}>Saving...</span>}
