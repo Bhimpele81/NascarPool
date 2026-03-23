@@ -82,8 +82,8 @@ export default function App() {
         {page==='dashboard' && <Dashboard weeks={data.weeks} onAddWeek={addWeek} onEditWeek={editWeek} onDeleteWeek={deleteWeek} />}
         {page==='entry' && currentWeek && <RaceEntry week={currentWeek} onSave={saveWeek} onBack={() => setPage('dashboard')} />}
         {page==='history' && <History weeks={data.weeks} onEditWeek={editWeek} />}
-        {page==='picks' && <DraftPicks weeks={data.weeks} />}
         {page==='rules' && <Rules />}
+        {page==='picks' && <DraftPicks weeks={data.weeks} />}
       </main>
     </div>
   );
@@ -102,6 +102,7 @@ function recalcRunningTotals(weeks) {
     else                   { billStreak = 0; donStreak = 0; }
     const result = calcWeeklyMoney(w.billDrivers, w.donDrivers, w.manualBonus||0, billStreak, donStreak);
     running = running + (result.billNet || 0);
-    return { ...w, result, runningTotal: running };
+    // Store streak info on the week so RaceEntry can display it
+    return { ...w, result, runningTotal: running, billStreakLen: billStreak, donStreakLen: donStreak };
   });
 }
