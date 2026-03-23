@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
   --navy:        #0d1b2a;
@@ -20,8 +20,8 @@
   --red-bg:      rgba(239,68,68,0.12);
   --yellow:      #f59e0b;
   --yellow-bg:   rgba(245,158,11,0.12);
-  --font-display: 'Barlow Condensed', sans-serif;
-  --font-body:    'Barlow', sans-serif;
+--font-display: 'Inter', sans-serif;
+--font-body:    'Inter', sans-serif;
   --radius:  8px;
   --radius-sm: 4px;
   --shadow:  0 2px 12px rgba(0,0,0,0.4);
