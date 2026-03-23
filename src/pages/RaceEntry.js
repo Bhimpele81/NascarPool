@@ -68,7 +68,7 @@ export default function RaceEntry({ week, onSave, onBack }) {
   }
 
   function handleAutoUpdate() {
-    alert('Auto Update Results — coming soon! This will pull live race results from the NASCAR API.');
+    alert('Auto Update Results');
   }
 
   const result = computeResult(form);
