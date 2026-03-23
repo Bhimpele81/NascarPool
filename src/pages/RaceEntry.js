@@ -19,10 +19,7 @@ const NASCAR_DRIVERS = [
 });
 
 function tierForIndex(i) { return i < 2 ? '1' : i < 4 ? '2' : '3'; }
-function tierLabel(i) {
-  const t = tierForIndex(i);
-  return t === '1' ? 'Tier 1 (1–12)' : t === '2' ? 'Tier 2 (13–25)' : 'Tier 3 (26+)';
-}
+function tierLabel(i) { return i < 2 ? 'T1 (1–12)' : i < 4 ? 'T2 (13–25)' : 'T3 (26+)'; }
 
 export default function RaceEntry({ week, onSave, onBack }) {
   const [form, setForm] = useState(() => {
@@ -68,14 +65,13 @@ export default function RaceEntry({ week, onSave, onBack }) {
   }
 
   function handleAutoUpdate() {
-    alert('Auto Update Results');
+    alert('Auto Update Results — coming soon! This will pull live race results from the NASCAR API.');
   }
 
   const result = computeResult(form);
 
   return (
     <div>
-      {/* Action bar */}
       <div className="action-bar">
         <button className="btn btn-ghost" onClick={onBack}>← Back</button>
         <button className="btn btn-secondary" onClick={() => handleSave(false)}>Save Draft</button>
@@ -87,7 +83,6 @@ export default function RaceEntry({ week, onSave, onBack }) {
         </div>
       </div>
 
-      {/* Race Info */}
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="card-header"><span className="card-title">Race Info</span></div>
         <div className="card-body">
@@ -179,69 +174,65 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
         <span className="section-header-title">{label}</span>
         {teamTotal > 0 && <span className="section-pts">{teamTotal.toFixed(1)} pts</span>}
       </div>
-      <div className="table-scroll">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th style={{ width: 80 }}>Tier</th>
-              <th>Driver</th>
-              <th style={{ width: 55 }}>Finish</th>
-              <th style={{ width: 65 }}>Stg</th>
-              <th className="num" style={{ width: 45 }}>T10</th>
-              <th className="num" style={{ width: 45 }}>Stg</th>
-              <th className="num" style={{ width: 60 }}>Base</th>
-              <th className="num" style={{ width: 65 }}>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {drivers.map((d, i) => {
-              const pts = calcDriverPoints(d.finish, tierForIndex(i), d.stageWins);
-              const isWinner = parseInt(d.finish, 10) === 1;
-              return (
-                <tr key={d.id} style={isWinner ? { background: 'rgba(37,99,235,0.08)' } : {}}>
-                  <td><span className="tier-label">{tierLabel(i)}</span></td>
-                  <td>
-                    <input
-                      className="form-input"
-                      list={`drivers-${team}-${i}`}
-                      placeholder="— Driver —"
-                      value={d.name}
-                      onChange={e => onUpdate(i, 'name', e.target.value)}
-                      style={{ fontSize: 13, minWidth: 160 }}
-                    />
-                    <datalist id={`drivers-${team}-${i}`}>
-                      {NASCAR_DRIVERS.map(n => <option key={n} value={n} />)}
-                    </datalist>
-                  </td>
-                  <td>
-                    <input className="form-input" type="number" min="1" max="43" placeholder="—"
-                      value={d.finish} onChange={e => onUpdate(i, 'finish', e.target.value)}
-                      style={{ textAlign: 'center', fontSize: 13 }} />
-                  </td>
-                  <td>
-                    <input className="form-input" type="number" min="0" max="5" placeholder="0"
-                      value={d.stageWins} onChange={e => onUpdate(i, 'stageWins', e.target.value)}
-                      style={{ textAlign: 'center', fontSize: 13, minWidth: 55 }} />
-                  </td>
-                  <td className="num">{pts.top10Pts > 0 ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>{pts.top10Pts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
-                  <td className="num">{pts.stagePts > 0 ? <span style={{ color: 'var(--blue-light)', fontWeight: 600 }}>{pts.stagePts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
-                  <td className="num" style={{ color: 'var(--text-muted)' }}>{d.finish ? pts.multipliedPoints.toFixed(1) : '—'}</td>
-                  <td className="num">
-                    {d.finish ? <strong style={{ color: isWinner ? 'var(--green)' : 'var(--text)' }}>{pts.total.toFixed(1)}</strong> : <span style={{ color: 'var(--text-dim)' }}>—</span>}
-                    {isWinner && <span style={{ marginLeft: 3 }}>🏆</span>}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot>
-            <tr className="total-row">
-              <td colSpan={7} style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: 11, color: 'var(--text-muted)' }}>Team Total</td>
-              <td className="num" style={{ fontSize: 16, fontWeight: 800, color: 'var(--blue-pale)' }}>{teamTotal > 0 ? teamTotal.toFixed(1) : '—'}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+      <table className="data-table" style={{ tableLayout: 'fixed', width: '100%' }}>
+        <thead>
+          <tr>
+            <th style={{ width: 75 }}>Tier</th>
+            <th>Driver</th>
+            <th style={{ width: 48, textAlign: 'center' }}>Fin</th>
+            <th style={{ width: 44, textAlign: 'center' }}>Stg</th>
+            <th className="num" style={{ width: 38 }}>T10</th>
+            <th className="num" style={{ width: 38 }}>Stg</th>
+            <th className="num" style={{ width: 52 }}>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {drivers.map((d, i) => {
+            const pts = calcDriverPoints(d.finish, tierForIndex(i), d.stageWins);
+            const isWinner = parseInt(d.finish, 10) === 1;
+            return (
+              <tr key={d.id} style={isWinner ? { background: 'rgba(37,99,235,0.08)' } : {}}>
+                <td style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{tierLabel(i)}</td>
+                <td>
+                  <input
+                    className="form-input"
+                    list={`drivers-${team}-${i}`}
+                    placeholder="— Driver —"
+                    value={d.name}
+                    onChange={e => onUpdate(i, 'name', e.target.value)}
+                    style={{ fontSize: 12, padding: '4px 6px', width: '100%' }}
+                  />
+                  <datalist id={`drivers-${team}-${i}`}>
+                    {NASCAR_DRIVERS.map(n => <option key={n} value={n} />)}
+                  </datalist>
+                </td>
+                <td>
+                  <input className="form-input" type="number" min="1" max="43" placeholder="—"
+                    value={d.finish} onChange={e => onUpdate(i, 'finish', e.target.value)}
+                    style={{ textAlign: 'center', fontSize: 12, padding: '4px 2px' }} />
+                </td>
+                <td>
+                  <input className="form-input" type="number" min="0" max="5" placeholder="0"
+                    value={d.stageWins} onChange={e => onUpdate(i, 'stageWins', e.target.value)}
+                    style={{ textAlign: 'center', fontSize: 12, padding: '4px 2px' }} />
+                </td>
+                <td className="num" style={{ fontSize: 12 }}>{pts.top10Pts > 0 ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>{pts.top10Pts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
+                <td className="num" style={{ fontSize: 12 }}>{pts.stagePts > 0 ? <span style={{ color: 'var(--blue-light)', fontWeight: 600 }}>{pts.stagePts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
+                <td className="num">
+                  {d.finish ? <strong style={{ fontSize: 13, color: isWinner ? 'var(--green)' : 'var(--text)' }}>{pts.total.toFixed(1)}</strong> : <span style={{ color: 'var(--text-dim)' }}>—</span>}
+                  {isWinner && <span style={{ marginLeft: 2 }}>🏆</span>}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+        <tfoot>
+          <tr className="total-row">
+            <td colSpan={6} style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: 11, color: 'var(--text-muted)' }}>Team Total</td>
+            <td className="num" style={{ fontSize: 15, fontWeight: 800, color: 'var(--blue-pale)' }}>{teamTotal > 0 ? teamTotal.toFixed(1) : '—'}</td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
   );
 }
