@@ -229,3 +229,9 @@ body {
   .bonus-grid  { grid-template-columns: 1fr; }
   .winner-amount { font-size: 28px; }
 }
+.desktop-only { display: block; }
+.mobile-only  { display: none; }
+@media (max-width: 600px) {
+  .desktop-only { display: none; }
+  .mobile-only  { display: block; }
+}
