@@ -130,7 +130,7 @@ body {
 .form-input, .form-select {
   width: 100%; padding: 6px 8px;
   font-family: var(--font-body); font-size: 13px;
-  background: var(--navy); color: var(--text);
+  background: var(--navy-light); color: var(--white);
   border: 1px solid var(--navy-border); border-radius: var(--radius-sm);
   transition: border-color 0.15s;
 }
@@ -138,6 +138,7 @@ body {
   outline: none; border-color: var(--blue-light);
   box-shadow: 0 0 0 2px rgba(58,155,213,0.2);
 }
+.form-input::placeholder { color: var(--text-muted); }
 .form-select option { background: var(--navy-mid); }
 .form-label {
   display: block; font-family: var(--font-display); font-size: 11px;
@@ -180,7 +181,7 @@ body {
 .section-header {
   padding: 10px 16px; display: flex; align-items: center; gap: 10px;
 }
-.section-header.bill-header { background: var(--blue);     border-bottom: 1px solid var(--navy-border); }
+.section-header.bill-header { background: var(--blue); border-bottom: 1px solid var(--navy-border); }
 .section-header.don-header  { background: rgba(239,68,68,0.3); border-bottom: 1px solid var(--navy-border); }
 .section-header-title { font-family: var(--font-display); font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: white; }
 .section-pts { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin-left: auto; color: rgba(255,255,255,0.8); }
