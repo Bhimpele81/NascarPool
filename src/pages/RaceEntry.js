@@ -36,7 +36,7 @@ export default function RaceEntry({ week, onSave, onBack }) {
 
   function computeResult(f) {
     if (!f.billDrivers.some(d => d.finish) && !f.donDrivers.some(d => d.finish)) return null;
-    return calcWeeklyMoney(f.billDrivers, f.donDrivers, parseFloat(f.manualBonus) || 0);
+    return calcWeeklyMoney(f.billDrivers, f.donDrivers, parseFloat(f.manualBonus) || 0, week.billStreakLen || 0, week.donStreakLen || 0);
   }
 
   function updateMeta(field, val) { setForm(prev => ({ ...prev, [field]: val })); }
@@ -69,6 +69,8 @@ export default function RaceEntry({ week, onSave, onBack }) {
   }
 
   const result = computeResult(form);
+  const billStreakBonus = result?.billStreakBonus || 0;
+  const donStreakBonus  = result?.donStreakBonus  || 0;
 
   return (
     <div>
@@ -125,6 +127,8 @@ export default function RaceEntry({ week, onSave, onBack }) {
               {result.billNet > result.donNet ? '🏆 Bill Wins' : result.donNet > result.billNet ? '🏆 Don Wins' : 'Tied'}
             </div>
             <div className="winner-sub">Bill {result.billPts.toFixed(1)} pts · Don {result.donPts.toFixed(1)} pts · Diff {Math.abs(result.pointDiff).toFixed(1)}</div>
+            {billStreakBonus > 0 && <div style={{ marginTop: 4, fontSize: 12, color: 'var(--yellow)' }}>🔥 Bill consecutive winner streak bonus +${billStreakBonus}</div>}
+            {donStreakBonus  > 0 && <div style={{ marginTop: 4, fontSize: 12, color: 'var(--yellow)' }}>🔥 Don consecutive winner streak bonus +${donStreakBonus}</div>}
           </div>
           <div className="winner-amount">${Math.abs(result.billNet > result.donNet ? result.billNet : result.donNet)}</div>
         </div>
@@ -257,7 +261,7 @@ function MoneyBreakdown({ label, result, side }) {
             {myPts.toFixed(2)} pts − {oppPts.toFixed(2)} pts = {diff >= 0 ? '+' : ''}{diff.toFixed(2)}
           </td></tr>
           <MRow label="Point diff ÷ 3" val={fromPts} />
-          {myStreakB  > 0 && <MRow label={`🏆 Consecutive winner (${myStreakL} weeks)`} val={myStreakB} />}
+          {myStreakB  > 0 && <MRow label={`🔥 Consecutive winner bonus (${myStreakL} weeks)`} val={myStreakB} />}
           {oppStreakB > 0 && <MRow label="Opponent streak bonus" val={-oppStreakB} />}
           {manualB   !== 0 && <MRow label="Special bonus" val={manualB} />}
         </tbody>
