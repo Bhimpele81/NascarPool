@@ -182,7 +182,7 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
               <th style={{ width: 80 }}>Tier</th>
               <th>Driver</th>
               <th style={{ width: 55 }}>Finish</th>
-              <th style={{ width: 50 }}>Stg</th>
+              <th style={{ width: 65 }}>Stg</th>
               <th className="num" style={{ width: 45 }}>T10</th>
               <th className="num" style={{ width: 45 }}>Stg</th>
               <th className="num" style={{ width: 60 }}>Base</th>
@@ -215,7 +215,7 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
                   <td>
                     <input className="form-input" type="number" min="0" max="5" placeholder="0"
                       value={d.stageWins} onChange={e => onUpdate(i, 'stageWins', e.target.value)}
-                      style={{ textAlign: 'center', fontSize: 13 }} />
+                      style={{ textAlign: 'center', fontSize: 13, minWidth: 55 }} />
                   </td>
                   <td className="num">{pts.top10Pts > 0 ? <span style={{ color: 'var(--green)', fontWeight: 700 }}>{pts.top10Pts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
                   <td className="num">{pts.stagePts > 0 ? <span style={{ color: 'var(--blue-light)', fontWeight: 600 }}>{pts.stagePts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
