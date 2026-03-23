@@ -183,7 +183,7 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
             <th style={{ width: 44, textAlign: 'center' }}>Stg</th>
             <th className="num" style={{ width: 38 }}>T10</th>
             <th className="num" style={{ width: 38 }}>Stg</th>
-            <th className="num" style={{ width: 52 }}>Total</th>
+            <th className="num" style={{ width: 58 }}>Total</th>
           </tr>
         </thead>
         <tbody>
@@ -218,9 +218,9 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
                 </td>
                 <td className="num" style={{ fontSize: 12 }}>{pts.top10Pts > 0 ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>{pts.top10Pts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
                 <td className="num" style={{ fontSize: 12 }}>{pts.stagePts > 0 ? <span style={{ color: 'var(--blue-light)', fontWeight: 600 }}>{pts.stagePts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
-                <td className="num">
+                <td className="num" style={{ position: 'relative' }}>
                   {d.finish ? <strong style={{ fontSize: 13, color: isWinner ? 'var(--green)' : 'var(--text)' }}>{pts.total.toFixed(1)}</strong> : <span style={{ color: 'var(--text-dim)' }}>—</span>}
-                  {isWinner && <span style={{ marginLeft: 2 }}>🏆</span>}
+                  {isWinner && <span style={{ position: 'absolute', marginLeft: 2, fontSize: 10 }}>🏆</span>}
                 </td>
               </tr>
             );
