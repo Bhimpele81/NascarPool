@@ -112,7 +112,7 @@ export default function Dashboard({ weeks, onAddWeek, onEditWeek, onDeleteWeek }
                         <td onClick={e => e.stopPropagation()}>
                           <button className="btn btn-danger btn-sm" onClick={() => {
                             if (window.confirm(`Delete ${w.track || 'this race'}?`)) onDeleteWeek(w.id);
-                          }}>Del</button>
+                          }}>−</button>
                         </td>
                       </tr>
                     );
