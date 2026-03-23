@@ -63,7 +63,7 @@ export default function App() {
       <header className="app-header">
         <div className="header-inner">
           <div className="header-brand">
-            <span className="flag-icon">🏁</span>
+            <img src="/logo.webp" alt="NASCAR" style={{ height: 36, objectFit: 'contain' }} />
             <span className="brand-title">NASCAR Pool</span>
             <span className="brand-sub">Bill vs Don · 2026</span>
           </div>
