@@ -4,9 +4,11 @@ import { exportToCSV } from '../utils/scoring';
 export default function Dashboard({ weeks, onAddWeek, onEditWeek, onDeleteWeek }) {
   const completed = weeks.filter(w => w.completed && w.result);
   const runningTotal = weeks.length > 0 ? (weeks[weeks.length - 1].runningTotal || 0) : 0;
-
   const leaderName = runningTotal > 0 ? 'Bill' : runningTotal < 0 ? 'Don' : null;
   const leaderAmt  = Math.abs(runningTotal);
+
+  // Most recent on top, but keep original index for race number
+  const reversedWeeks = [...weeks].map((w, i) => ({ ...w, raceNum: i + 1 })).reverse();
 
   return (
     <div>
@@ -18,15 +20,15 @@ export default function Dashboard({ weeks, onAddWeek, onEditWeek, onDeleteWeek }
         boxShadow: 'var(--shadow)'
       }}>
         <div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: 6 }}>
-            2025 Season — Running Total
+          <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: 6 }}>
+            2026 Season — Running Total
           </div>
           {leaderName ? (
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 42, fontWeight: 800, color: leaderName === 'Bill' ? 'var(--blue-light)' : 'var(--red)', lineHeight: 1 }}>
+            <div style={{ fontSize: 42, fontWeight: 800, color: leaderName === 'Bill' ? 'var(--blue-light)' : 'var(--red)', lineHeight: 1 }}>
               {leaderName} leads <span style={{ color: 'var(--green)' }}>${leaderAmt}</span>
             </div>
           ) : (
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 42, fontWeight: 800, color: 'var(--text-muted)' }}>Even</div>
+            <div style={{ fontSize: 42, fontWeight: 800, color: 'var(--text-muted)' }}>Even</div>
           )}
           <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>
             {completed.length} races complete
@@ -48,7 +50,7 @@ export default function Dashboard({ weeks, onAddWeek, onEditWeek, onDeleteWeek }
         {weeks.length === 0 ? (
           <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🏁</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, marginBottom: 8 }}>No races yet</div>
+            <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>No races yet</div>
             <div>Click "Add Race" to get started</div>
           </div>
         ) : (
@@ -59,14 +61,14 @@ export default function Dashboard({ weeks, onAddWeek, onEditWeek, onDeleteWeek }
                 <th style={{ width: 40 }}>Pick</th>
                 <th>Location</th>
                 <th style={{ width: 80 }}>Date</th>
-                <th style={{ width: 60 }}>Winner</th>
+                <th style={{ width: 60 }}>Status</th>
                 <th className="num" style={{ width: 120 }}>Result</th>
                 <th className="num" style={{ width: 140 }}>Running Total</th>
                 <th style={{ width: 80 }}></th>
               </tr>
             </thead>
             <tbody>
-              {weeks.map((w, i) => {
+              {reversedWeeks.map((w) => {
                 const r = w.result;
                 const billWon = r && r.billNet > 0;
                 const donWon  = r && r.donNet  > 0;
@@ -74,10 +76,10 @@ export default function Dashboard({ weeks, onAddWeek, onEditWeek, onDeleteWeek }
                 const rt      = w.runningTotal || 0;
                 return (
                   <tr key={w.id} onClick={() => onEditWeek(w.id)} style={{ cursor: 'pointer' }}>
-                    <td style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: 13 }}>{i + 1}</td>
+                    <td style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: 13 }}>{w.raceNum}</td>
                     <td>
                       {w.firstPick
-                        ? <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, color: w.firstPick === 'Bill' ? 'var(--blue-light)' : 'var(--red)' }}>{w.firstPick === 'Bill' ? 'B' : 'D'}</span>
+                        ? <span style={{ fontWeight: 800, fontSize: 15, color: w.firstPick === 'Bill' ? 'var(--blue-light)' : 'var(--red)' }}>{w.firstPick === 'Bill' ? 'B' : 'D'}</span>
                         : <span style={{ color: 'var(--text-muted)' }}>—</span>}
                     </td>
                     <td>
@@ -96,14 +98,14 @@ export default function Dashboard({ weeks, onAddWeek, onEditWeek, onDeleteWeek }
                     </td>
                     <td className="num">
                       {amt != null ? (
-                        <span style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, color: billWon ? 'var(--blue-light)' : donWon ? 'var(--red)' : 'var(--text-muted)' }}>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: billWon ? 'var(--blue-light)' : donWon ? 'var(--red)' : 'var(--text-muted)' }}>
                           {billWon ? 'Bill' : donWon ? 'Don' : 'Even'} {amt > 0 ? `+$${amt}` : ''}
                         </span>
                       ) : '—'}
                     </td>
                     <td className="num">
                       {r ? (
-                        <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, color: rt > 0 ? 'var(--blue-light)' : rt < 0 ? 'var(--red)' : 'var(--text-muted)' }}>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: rt > 0 ? 'var(--blue-light)' : rt < 0 ? 'var(--red)' : 'var(--text-muted)' }}>
                           {rt > 0 ? `Bill +$${rt}` : rt < 0 ? `Don +$${Math.abs(rt)}` : 'Even'}
                         </span>
                       ) : '—'}
