@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { calcDriverPoints, calcWeeklyMoney, validateTeam } from '../utils/scoring';
 
-// 2025 Cup Series roster — sorted alphabetically by last name
 const NASCAR_DRIVERS = [
   'A.J. Allmendinger','Aric Almirola','Alex Bowman','Ryan Blaney',
   'Christopher Bell','Chad Briscoe','Josh Berry','William Byron',
@@ -13,23 +12,20 @@ const NASCAR_DRIVERS = [
   'Martin Truex Jr.','Shane Van Gisbergen','Bubba Wallace','Zane Smith',
   'Todd Gilliland','Kyle Busch','Chris Buescher','Ty Dillon',
   'Justin Haley','Harrison Burton','Alfredo','Connor Zilisch',
-  'Landon Cassill','Cole Custer'
+  'Landon Cassill'
 ].filter((v,i,a) => a.indexOf(v)===i).sort((a,b) => {
   const last = n => n.split(' ').slice(-1)[0];
   return last(a).localeCompare(last(b));
 });
 
-// Tier is determined by row position: 0-1 = T1, 2-3 = T2, 4-5 = T3
 function tierForIndex(i) { return i < 2 ? '1' : i < 4 ? '2' : '3'; }
 function tierLabel(i) {
   const t = tierForIndex(i);
   return t === '1' ? 'Tier 1 (1–12)' : t === '2' ? 'Tier 2 (13–25)' : 'Tier 3 (26+)';
 }
-function tierClass(i) { return `tier-${tierForIndex(i)}`; }
 
 export default function RaceEntry({ week, onSave, onBack }) {
   const [form, setForm] = useState(() => {
-    // Ensure drivers have tiers set by position
     const fixTiers = (drivers) => drivers.map((d, i) => ({ ...d, tier: tierForIndex(i) }));
     return { ...week, billDrivers: fixTiers(week.billDrivers), donDrivers: fixTiers(week.donDrivers) };
   });
@@ -58,9 +54,13 @@ export default function RaceEntry({ week, onSave, onBack }) {
   }
 
   function handleSave(markComplete) {
-    const allErrors = [...validateTeam(form.billDrivers, 'Bill'), ...validateTeam(form.donDrivers, 'Don')];
-    setErrors(allErrors);
-    if (allErrors.length > 0 && markComplete) return;
+    if (markComplete) {
+      const allErrors = [...validateTeam(form.billDrivers, 'Bill'), ...validateTeam(form.donDrivers, 'Don')];
+      setErrors(allErrors);
+      if (allErrors.length > 0) return;
+    } else {
+      setErrors([]);
+    }
     onSave({ ...form, result: computeResult(form), completed: markComplete || form.completed });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -71,16 +71,14 @@ export default function RaceEntry({ week, onSave, onBack }) {
 
   return (
     <div>
-      {/* Action bar */}
       <div className="action-bar">
         <button className="btn btn-ghost" onClick={onBack}>← Back</button>
         <button className="btn btn-secondary" onClick={() => handleSave(false)}>Save Draft</button>
         <button className="btn btn-green" onClick={() => handleSave(true)}>✓ Complete</button>
-        {saved && <span style={{ color: 'var(--green)', fontFamily: 'var(--font-display)', fontWeight: 700 }}>Saved!</span>}
+        {saved && <span style={{ color: 'var(--green)', fontWeight: 700 }}>Saved!</span>}
         {form.completed && <span className="badge badge-green" style={{ marginLeft: 'auto' }}>Completed</span>}
       </div>
 
-      {/* Race Info */}
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="card-header"><span className="card-title">Race Info</span></div>
         <div className="card-body">
@@ -95,17 +93,11 @@ export default function RaceEntry({ week, onSave, onBack }) {
             </div>
             <div>
               <label className="form-label">First Pick</label>
-<input
-  className="form-input"
-  list={`drivers-${team}-${i}`}
-  placeholder="— Driver —"
-  value={d.name}
-  onChange={e => onUpdate(i, 'name', e.target.value)}
-  style={{ fontSize: 13, minWidth: 160 }}
-/>
-<datalist id={`drivers-${team}-${i}`}>
-  {NASCAR_DRIVERS.map(n => <option key={n} value={n} />)}
-</datalist>
+              <select className="form-select" value={form.firstPick || ''} onChange={e => updateMeta('firstPick', e.target.value)}>
+                <option value="">— Select —</option>
+                <option value="Bill">Bill</option>
+                <option value="Don">Don</option>
+              </select>
             </div>
             <div>
               <label className="form-label">Notes</label>
@@ -122,7 +114,6 @@ export default function RaceEntry({ week, onSave, onBack }) {
         </div>
       )}
 
-      {/* Winner box */}
       {result && (
         <div className={`winner-box ${result.billNet > result.donNet ? 'bill-wins' : result.donNet > result.billNet ? 'don-wins' : 'tie'}`}>
           <div>
@@ -135,15 +126,13 @@ export default function RaceEntry({ week, onSave, onBack }) {
         </div>
       )}
 
-      {/* Driver tables */}
       <div className="driver-tables-grid">
         <DriverTable label="Bill's Drivers" team="billDrivers" headerClass="bill-header"
           drivers={form.billDrivers} onUpdate={(i,f2,v) => updateDriver('billDrivers',i,f2,v)} />
-        <DriverTable label="Don's Drivers"  team="donDrivers"  headerClass="don-header"
-          drivers={form.donDrivers}  onUpdate={(i,f2,v) => updateDriver('donDrivers',i,f2,v)} />
+        <DriverTable label="Don's Drivers" team="donDrivers" headerClass="don-header"
+          drivers={form.donDrivers} onUpdate={(i,f2,v) => updateDriver('donDrivers',i,f2,v)} />
       </div>
 
-      {/* Money breakdown */}
       {result && (
         <div className="card" style={{ marginBottom: 14 }}>
           <div className="card-header"><span className="card-title">Money Breakdown</span></div>
@@ -203,15 +192,17 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
                 <tr key={d.id} style={isWinner ? { background: 'rgba(37,99,235,0.08)' } : {}}>
                   <td><span className="tier-label">{tierLabel(i)}</span></td>
                   <td>
-                    <select
-                      className="form-select"
+                    <input
+                      className="form-input"
+                      list={`drivers-${team}-${i}`}
+                      placeholder="— Driver —"
                       value={d.name}
                       onChange={e => onUpdate(i, 'name', e.target.value)}
-                      style={{ fontSize: 13 }}
-                    >
-                      <option value="">— Driver —</option>
-                      {NASCAR_DRIVERS.map(n => <option key={n} value={n}>{n}</option>)}
-                    </select>
+                      style={{ fontSize: 13, minWidth: 160 }}
+                    />
+                    <datalist id={`drivers-${team}-${i}`}>
+                      {NASCAR_DRIVERS.map(n => <option key={n} value={n} />)}
+                    </datalist>
                   </td>
                   <td>
                     <input className="form-input" type="number" min="1" max="43" placeholder="—"
@@ -223,9 +214,9 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
                       value={d.stageWins} onChange={e => onUpdate(i, 'stageWins', e.target.value)}
                       style={{ textAlign: 'center', fontSize: 13, minWidth: 55 }} />
                   </td>
-                  <td className="num">{pts.top10Pts > 0 ? <span style={{ color: 'var(--green)', fontWeight: 700 }}>{pts.top10Pts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
+                  <td className="num">{pts.top10Pts > 0 ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>{pts.top10Pts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
                   <td className="num">{pts.stagePts > 0 ? <span style={{ color: 'var(--blue-light)', fontWeight: 600 }}>{pts.stagePts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
-                  <td className="num" style={{ color: 'var(--text-muted)', fontSize: 12 }}>{d.finish ? pts.multipliedPoints.toFixed(1) : '—'}</td>
+                  <td className="num" style={{ color: 'var(--text-muted)' }}>{d.finish ? pts.multipliedPoints.toFixed(1) : '—'}</td>
                   <td className="num">
                     {d.finish ? <strong style={{ color: isWinner ? 'var(--green)' : 'var(--text)' }}>{pts.total.toFixed(1)}</strong> : <span style={{ color: 'var(--text-dim)' }}>—</span>}
                     {isWinner && <span style={{ marginLeft: 3 }}>🏆</span>}
@@ -236,8 +227,8 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
           </tbody>
           <tfoot>
             <tr className="total-row">
-              <td colSpan={7} style={{ fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', fontSize: 11, color: 'var(--text-muted)' }}>Team Total</td>
-              <td className="num" style={{ fontSize: 16, fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--blue-pale)' }}>{teamTotal > 0 ? teamTotal.toFixed(1) : '—'}</td>
+              <td colSpan={7} style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: 11, color: 'var(--text-muted)' }}>Team Total</td>
+              <td className="num" style={{ fontSize: 16, fontWeight: 800, color: 'var(--blue-pale)' }}>{teamTotal > 0 ? teamTotal.toFixed(1) : '—'}</td>
             </tr>
           </tfoot>
         </table>
@@ -259,21 +250,21 @@ function MoneyBreakdown({ label, result, side }) {
   const color      = side === 'bill' ? 'var(--blue-light)' : 'var(--red)';
   return (
     <div>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, textTransform: 'uppercase', color, marginBottom: 10 }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', color, marginBottom: 10 }}>{label}</div>
       <table style={{ width: '100%', fontSize: 13 }}>
         <tbody>
           <tr><td colSpan={2} style={{ paddingBottom: 6, color: 'var(--text-muted)', fontSize: 12 }}>
             {myPts.toFixed(2)} pts − {oppPts.toFixed(2)} pts = {diff >= 0 ? '+' : ''}{diff.toFixed(2)}
           </td></tr>
-          <MRow label={`Point diff ÷ 3`} val={fromPts} />
+          <MRow label="Point diff ÷ 3" val={fromPts} />
           {myStreakB  > 0 && <MRow label={`🏆 Consecutive winner (${myStreakL} weeks)`} val={myStreakB} />}
-          {oppStreakB > 0 && <MRow label={`Opponent streak bonus`} val={-oppStreakB} />}
+          {oppStreakB > 0 && <MRow label="Opponent streak bonus" val={-oppStreakB} />}
           {manualB   !== 0 && <MRow label="Special bonus" val={manualB} />}
         </tbody>
         <tfoot>
           <tr style={{ borderTop: '1px solid var(--navy-border)' }}>
-            <td style={{ paddingTop: 8, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, color: 'var(--text-muted)' }}>Net</td>
-            <td style={{ paddingTop: 8, textAlign: 'right', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, color: net >= 0 ? 'var(--green)' : 'var(--red)' }}>
+            <td style={{ paddingTop: 8, fontWeight: 800, fontSize: 13, color: 'var(--text-muted)' }}>Net</td>
+            <td style={{ paddingTop: 8, textAlign: 'right', fontWeight: 800, fontSize: 22, color: net >= 0 ? 'var(--green)' : 'var(--red)' }}>
               {net >= 0 ? '+$' : '-$'}{Math.abs(net)}
             </td>
           </tr>
