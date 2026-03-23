@@ -210,6 +210,9 @@ body {
 .money-breakdown-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
 .bonus-grid { display: grid; grid-template-columns: 160px 1fr; gap: 14px; align-items: end; }
 .table-scroll { overflow-x: auto; }
+.driver-tables-grid select.form-select {
+  min-width: 160px;
+}
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
