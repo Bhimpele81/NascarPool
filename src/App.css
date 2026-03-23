@@ -130,8 +130,8 @@ body {
 .form-input, .form-select {
   width: 100%; padding: 6px 8px;
   font-family: var(--font-body); font-size: 13px;
-  background: var(--navy-light); color: var(--white);
-  border: 1px solid var(--navy-border); border-radius: var(--radius-sm);
+  background: #2e4a68; color: #ffffff;
+  border: 1px solid #3d6080; border-radius: var(--radius-sm);
   transition: border-color 0.15s;
 }
 .form-input:focus, .form-select:focus {
