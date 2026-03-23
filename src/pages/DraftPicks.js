@@ -103,9 +103,9 @@ export default function DraftPicks({ weeks }) {
             <thead>
               <tr>
                 <th style={{ width: 50 }}>#</th>
+                <th style={{ width: 120 }}>Pick Earned By</th>
                 <th>Location</th>
                 <th>Winning Driver</th>
-                <th>Pick Earned By</th>
                 <th style={{ width: 100 }}>Date</th>
               </tr>
             </thead>
@@ -113,13 +113,13 @@ export default function DraftPicks({ weeks }) {
               {pickHistory.map((p, i) => (
                 <tr key={i}>
                   <td style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{p.race}</td>
-                  <td style={{ fontWeight: 600 }}>{p.track}</td>
-                  <td style={{ color: 'var(--text-muted)' }}>{p.winningDriver || '—'}</td>
                   <td>
                     <span style={{ fontWeight: 700, fontSize: 13, color: p.winner === 'Bill' ? 'var(--blue-light)' : 'var(--red)' }}>
                       {p.winner}
                     </span>
                   </td>
+                  <td style={{ fontWeight: 600 }}>{p.track}</td>
+                  <td style={{ color: 'var(--text-muted)' }}>{p.winningDriver || '—'}</td>
                   <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>
                     {p.date ? new Date(p.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
                   </td>
