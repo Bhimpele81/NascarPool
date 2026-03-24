@@ -1,14 +1,10 @@
 // NASCAR race results fetcher
-// Fetches the ESPN race results page via a CORS proxy and parses the HTML table.
-// The ESPN JSON APIs are blocked by CORS from browser apps, but the HTML page
-// works fine when routed through allorigins.win.
+// Fetches the ESPN race results page via a CORS proxy and parses finish positions.
+// Stage wins are not available from ESPN HTML — enter those manually.
 
 const CORS_PROXY = 'https://api.allorigins.win/get?url=';
 const ESPN_SCHEDULE_URL = 'https://www.espn.com/racing/schedule/_/series/sprint';
 
-/**
- * Normalize a driver name for fuzzy matching.
- */
 function normalizeName(name) {
   return (name || '')
     .toLowerCase()
@@ -31,9 +27,6 @@ function matchScore(espnName, draftName) {
   return 0;
 }
 
-/**
- * Fetch a URL via the allorigins CORS proxy and return the HTML string.
- */
 async function proxyFetch(targetUrl) {
   const proxied = `${CORS_PROXY}${encodeURIComponent(targetUrl)}`;
   const res = await fetch(proxied);
@@ -44,29 +37,8 @@ async function proxyFetch(targetUrl) {
 }
 
 /**
- * Derive stage wins from the ESPN BONUS column.
- *
- * NASCAR bonus point breakdown (from ESPN results table):
- *   - Each stage win:       +10 pts
- *   - Most laps led:        +5 pts  (only one driver per race)
- *   - Each laps-led bonus:  +1 pt per "block" of laps led (up to ~5 pts)
- *   - Race winner playoff:  +5 pts  (pos === 1 only)
- *
- * Strategy: strip the known non-stage bonuses, then divide by 10.
- *   1. If pos === 1, subtract 5 (race winner playoff bonus)
- *   2. Remaining non-stage bonuses (laps led) are always < 10
- *      so floor(adjusted / 10) gives stage wins cleanly.
- *   3. Cap at 2 (max stages per race).
- */
-function deriveStageWins(bonus, pos) {
-  let adj = bonus;
-  if (pos === 1) adj = Math.max(0, adj - 5); // strip race winner playoff pts
-  return Math.min(2, Math.floor(adj / 10));
-}
-
-/**
- * Parse the ESPN race results HTML table into driver objects.
- * Columns (0-indexed): POS | DRIVER | CAR | MANUFACTURER | LAPS | START | LED | PTS | BONUS | PENALTY
+ * Parse ESPN race results HTML — extract POS and DRIVER only.
+ * Columns: POS | DRIVER | CAR | MANUFACTURER | LAPS | START | LED | PTS | BONUS | PENALTY
  */
 function parseESPNResultsTable(html) {
   const drivers = [];
@@ -76,13 +48,11 @@ function parseESPNResultsTable(html) {
     const rows = doc.querySelectorAll('table tr');
     rows.forEach(row => {
       const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
-      if (cells.length < 9) return;
-      const pos   = parseInt(cells[0], 10);
-      const name  = cells[1];
-      const bonus = parseInt(cells[8], 10) || 0;
+      if (cells.length < 2) return;
+      const pos  = parseInt(cells[0], 10);
+      const name = cells[1];
       if (!pos || !name || pos > 43) return;
-      const stageWins = deriveStageWins(bonus, pos);
-      drivers.push({ name, finish: pos, stageWins });
+      drivers.push({ name, finish: pos, stageWins: 0 });
     });
   } catch (e) {
     throw new Error('Failed to parse ESPN results table: ' + e.message);
@@ -91,17 +61,12 @@ function parseESPNResultsTable(html) {
   return drivers;
 }
 
-/**
- * Fetch the ESPN schedule page and extract raceIds.
- */
 async function getESPNRaceId(raceDateStr) {
   const html = await proxyFetch(ESPN_SCHEDULE_URL);
   const raceRegex = /raceId=(\d+)&series=sprint/g;
   const ids = new Set();
   let match;
-  while ((match = raceRegex.exec(html)) !== null) {
-    ids.add(match[1]);
-  }
+  while ((match = raceRegex.exec(html)) !== null) ids.add(match[1]);
   if (ids.size === 0) throw new Error('No race IDs found on ESPN schedule page.');
 
   if (!raceDateStr) return [...ids].pop();
@@ -111,7 +76,6 @@ async function getESPNRaceId(raceDateStr) {
     if (id.startsWith(target)) return id;
   }
 
-  // Fallback: closest by date prefix
   const targetNum = parseInt(target, 10);
   let bestId = null, bestDiff = Infinity;
   for (const id of ids) {
@@ -125,9 +89,11 @@ async function getESPNRaceId(raceDateStr) {
 }
 
 /**
- * Main export: fetch finishing positions and stage wins for all drafted drivers.
- * @param {string}   raceDateStr - YYYY-MM-DD format
- * @param {string[]} draftNames  - driver names to look up
+ * Fetch finishing positions for all drafted drivers from ESPN.
+ * Stage wins are not populated — enter them manually after the race.
+ *
+ * @param {string}   raceDateStr - YYYY-MM-DD
+ * @param {string[]} draftNames  - drafted driver names to match
  * @returns {Promise<Object>}    - { [draftName]: { finish, stageWins } }
  */
 export async function fetchRaceResults(raceDateStr, draftNames) {
@@ -147,7 +113,7 @@ export async function fetchRaceResults(raceDateStr, draftNames) {
       if (score > bestScore) { bestScore = score; bestDriver = d; }
     }
     if (bestDriver && bestScore >= 40) {
-      result[draftName] = { finish: bestDriver.finish, stageWins: bestDriver.stageWins };
+      result[draftName] = { finish: bestDriver.finish, stageWins: 0 };
     }
   }
   return result;
