@@ -4,9 +4,6 @@
 // works fine when routed through allorigins.win.
 
 const CORS_PROXY = 'https://api.allorigins.win/get?url=';
-
-// Known 2026 race IDs from ESPN (raceId in URL: espn.com/racing/raceresults?series=sprint&raceId=...)
-// We look up by race date to find the right one, then scrape that page.
 const ESPN_SCHEDULE_URL = 'https://www.espn.com/racing/schedule/_/series/sprint';
 
 /**
@@ -47,20 +44,32 @@ async function proxyFetch(targetUrl) {
 }
 
 /**
+ * Derive stage wins from the ESPN BONUS column.
+ *
+ * NASCAR bonus point breakdown (from ESPN results table):
+ *   - Each stage win:       +10 pts
+ *   - Most laps led:        +5 pts  (only one driver per race)
+ *   - Each laps-led bonus:  +1 pt per "block" of laps led (up to ~5 pts)
+ *   - Race winner playoff:  +5 pts  (pos === 1 only)
+ *
+ * Strategy: strip the known non-stage bonuses, then divide by 10.
+ *   1. If pos === 1, subtract 5 (race winner playoff bonus)
+ *   2. Remaining non-stage bonuses (laps led) are always < 10
+ *      so floor(adjusted / 10) gives stage wins cleanly.
+ *   3. Cap at 2 (max stages per race).
+ */
+function deriveStageWins(bonus, pos) {
+  let adj = bonus;
+  if (pos === 1) adj = Math.max(0, adj - 5); // strip race winner playoff pts
+  return Math.min(2, Math.floor(adj / 10));
+}
+
+/**
  * Parse the ESPN race results HTML table into driver objects.
- * Columns: POS | DRIVER | CAR | MANUFACTURER | LAPS | START | LED | PTS | BONUS | PENALTY
- * Stage wins are reverse-engineered from the BONUS points column:
- *   Each stage win = 1 bonus point for winning a stage segment.
- *   ESPN shows total bonus pts which include stage wins (1pt each) + other bonuses.
- *   We extract stage wins conservatively as Math.floor(bonus / 1) capped at 2.
- * NOTE: ESPN does not expose a clean stage win count in the HTML — we use
- *   the bonus column as a proxy and cap at 2 (max stage wins per race).
+ * Columns (0-indexed): POS | DRIVER | CAR | MANUFACTURER | LAPS | START | LED | PTS | BONUS | PENALTY
  */
 function parseESPNResultsTable(html) {
   const drivers = [];
-  // Find the results table rows via regex on the HTML
-  // Each data row looks like: <tr>...<td>1</td><td>Tyler Reddick</td>...
-  // We use a DOMParser if available (browser), else regex fallback
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
@@ -68,15 +77,11 @@ function parseESPNResultsTable(html) {
     rows.forEach(row => {
       const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
       if (cells.length < 9) return;
-      const pos    = parseInt(cells[0], 10);
-      const name   = cells[1];
-      const bonus  = parseInt(cells[8], 10) || 0;
+      const pos   = parseInt(cells[0], 10);
+      const name  = cells[1];
+      const bonus = parseInt(cells[8], 10) || 0;
       if (!pos || !name || pos > 43) return;
-      // Stage wins: ESPN bonus includes 1pt per stage win + other bonuses (pole, etc.)
-      // Pole = 1 bonus pt, stage win = 1 bonus pt each, race win bonus varies.
-      // We cannot perfectly separate them, so we note stageWins as bonus-derived.
-      // User can override manually if needed.
-      const stageWins = Math.min(bonus, 2); // conservative: cap at 2
+      const stageWins = deriveStageWins(bonus, pos);
       drivers.push({ name, finish: pos, stageWins });
     });
   } catch (e) {
@@ -87,14 +92,11 @@ function parseESPNResultsTable(html) {
 }
 
 /**
- * Fetch the ESPN schedule page and extract raceIds with their dates.
+ * Fetch the ESPN schedule page and extract raceIds.
  */
 async function getESPNRaceId(raceDateStr) {
   const html = await proxyFetch(ESPN_SCHEDULE_URL);
-  // ESPN schedule page embeds race links like:
-  // href="/racing/raceresults?raceId=202603220030&series=sprint"
   const raceRegex = /raceId=(\d+)&series=sprint/g;
-  const dateRegex = /(\d{4})(\d{2})(\d{2})/; // from raceId prefix YYYYMMDD
   const ids = new Set();
   let match;
   while ((match = raceRegex.exec(html)) !== null) {
@@ -102,18 +104,14 @@ async function getESPNRaceId(raceDateStr) {
   }
   if (ids.size === 0) throw new Error('No race IDs found on ESPN schedule page.');
 
-  if (!raceDateStr) {
-    // Return last found ID (most recent)
-    return [...ids].pop();
-  }
+  if (!raceDateStr) return [...ids].pop();
 
-  // Match raceId by embedded date (first 8 chars of raceId = YYYYMMDD)
-  const target = raceDateStr.replace(/-/g, ''); // YYYYMMDD
+  const target = raceDateStr.replace(/-/g, '');
   for (const id of ids) {
     if (id.startsWith(target)) return id;
   }
 
-  // Fallback: find closest by date prefix
+  // Fallback: closest by date prefix
   const targetNum = parseInt(target, 10);
   let bestId = null, bestDiff = Infinity;
   for (const id of ids) {
