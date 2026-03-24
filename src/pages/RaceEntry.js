@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { calcDriverPoints, calcWeeklyMoney, validateTeam } from '../utils/scoring';
+import { fetchRaceResults } from '../utils/espnApi';
 
 const NASCAR_DRIVERS = [
   'A.J. Allmendinger','Aric Almirola','Alex Bowman','Ryan Blaney',
@@ -28,6 +29,8 @@ export default function RaceEntry({ week, onSave, onBack }) {
   });
   const [errors, setErrors] = useState([]);
   const [saved, setSaved] = useState(false);
+  const [autoStatus, setAutoStatus] = useState(null); // null | 'loading' | 'success' | 'error'
+  const [autoMessage, setAutoMessage] = useState('');
 
   useEffect(() => {
     onSave({ ...form, result: computeResult(form) });
@@ -64,8 +67,58 @@ export default function RaceEntry({ week, onSave, onBack }) {
     if (markComplete) onBack();
   }
 
-  function handleAutoUpdate() {
-    alert('Auto Update Results — coming soon! This will pull live race results from the NASCAR API.');
+  async function handleAutoUpdate() {
+    setAutoStatus('loading');
+    setAutoMessage('');
+    try {
+      // Collect all drafted driver names
+      const allNames = [
+        ...form.billDrivers.map(d => d.name),
+        ...form.donDrivers.map(d => d.name),
+      ].filter(Boolean);
+
+      if (allNames.length === 0) {
+        setAutoStatus('error');
+        setAutoMessage('No drivers entered yet. Add driver names first, then auto-update.');
+        return;
+      }
+
+      const resultsMap = await fetchRaceResults(form.raceDate, allNames);
+      const matched = Object.keys(resultsMap).length;
+
+      if (matched === 0) {
+        setAutoStatus('error');
+        setAutoMessage('No drivers could be matched to ESPN results. The race may not be finished yet, or driver names may not match.');
+        return;
+      }
+
+      // Apply results to Bill's drivers
+      setForm(prev => {
+        const updatedBill = prev.billDrivers.map(d => {
+          const r = resultsMap[d.name];
+          if (!r) return d;
+          return { ...d, finish: String(r.finish ?? ''), stageWins: String(r.stageWins ?? 0) };
+        });
+        const updatedDon = prev.donDrivers.map(d => {
+          const r = resultsMap[d.name];
+          if (!r) return d;
+          return { ...d, finish: String(r.finish ?? ''), stageWins: String(r.stageWins ?? 0) };
+        });
+        return { ...prev, billDrivers: updatedBill, donDrivers: updatedDon };
+      });
+
+      const total = form.billDrivers.length + form.donDrivers.length;
+      const unmatched = total - matched;
+      setAutoStatus('success');
+      setAutoMessage(
+        `✓ Updated ${matched} of ${total} drivers from ESPN.${
+          unmatched > 0 ? ` ${unmatched} driver(s) not found — check names manually.` : ''
+        }`
+      );
+    } catch (err) {
+      setAutoStatus('error');
+      setAutoMessage(`ESPN fetch failed: ${err.message}`);
+    }
   }
 
   const result = computeResult(form);
@@ -81,9 +134,32 @@ export default function RaceEntry({ week, onSave, onBack }) {
         {saved && <span style={{ color: 'var(--green)', fontWeight: 700 }}>Saved!</span>}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
           {form.completed && <span className="badge badge-green">Completed</span>}
-          <button className="btn btn-primary" onClick={handleAutoUpdate}>⚡ Auto Update Results</button>
+          <button
+            className="btn btn-primary"
+            onClick={handleAutoUpdate}
+            disabled={autoStatus === 'loading'}
+            style={{ opacity: autoStatus === 'loading' ? 0.7 : 1 }}
+          >
+            {autoStatus === 'loading' ? '⏳ Fetching…' : '⚡ Auto Update Results'}
+          </button>
         </div>
       </div>
+
+      {/* Auto-update status banner */}
+      {autoStatus && autoStatus !== 'loading' && (
+        <div style={{
+          margin: '0 0 12px 0',
+          padding: '10px 14px',
+          borderRadius: 'var(--radius)',
+          background: autoStatus === 'success' ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
+          border: `1px solid ${autoStatus === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(239,68,68,0.3)'}`,
+          color: autoStatus === 'success' ? 'var(--green)' : 'var(--red)',
+          fontSize: 13,
+          fontWeight: 600,
+        }}>
+          {autoMessage}
+        </div>
+      )}
 
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="card-header"><span className="card-title">Race Info</span></div>
