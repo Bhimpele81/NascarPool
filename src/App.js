@@ -74,6 +74,8 @@ export default function App() {
               <button className={page==='history'   ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('history')}>History</button>
               <button className={page==='picks'     ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('picks')}>Draft Picks</button>
               <button className={page==='rules'     ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('rules')}>Rules</button>
+              <a href="https://ncaabowlpool.onrender.com/" target="_blank" rel="noopener noreferrer" className="nav-btn" style={{textDecoration:'none'}}>Bowl Pool</a>
+              <a href="https://pgagolfpool.onrender.com/" target="_blank" rel="noopener noreferrer" className="nav-btn" style={{textDecoration:'none'}}>PGA Pool</a>
             </nav>
           </div>
         </div>
