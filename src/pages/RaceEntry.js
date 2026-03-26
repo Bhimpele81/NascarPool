@@ -97,12 +97,12 @@ export default function RaceEntry({ week, onSave, onBack }) {
         const updatedBill = prev.billDrivers.map(d => {
           const r = resultsMap[d.name];
           if (!r) return d;
-          return { ...d, finish: String(r.finish ?? ''), stageWins: String(r.stageWins ?? 0) };
+          return { ...d, finish: String(r.finish ?? ''), stageWins: d.stageWins || String(r.stageWins ?? 0) };
         });
         const updatedDon = prev.donDrivers.map(d => {
           const r = resultsMap[d.name];
           if (!r) return d;
-          return { ...d, finish: String(r.finish ?? ''), stageWins: String(r.stageWins ?? 0) };
+          return { ...d, finish: String(r.finish ?? ''), stageWins: d.stageWins || String(r.stageWins ?? 0) };
         });
         return { ...prev, billDrivers: updatedBill, donDrivers: updatedDon };
       });
