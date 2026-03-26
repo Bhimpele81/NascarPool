@@ -30,9 +30,9 @@ export default function History({ weeks, onEditWeek }) {
     );
   }
 
-  // Build driver draft counts
+  // Build driver draft counts — include all weeks (completed + drafts)
   const driverCounts = {};
-  completed.forEach(week => {
+  weeks.forEach(week => {
     week.billDrivers.forEach(d => {
       if (!d.name) return;
       if (!driverCounts[d.name]) driverCounts[d.name] = { bill: 0, don: 0 };
