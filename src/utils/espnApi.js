@@ -85,6 +85,7 @@ async function getESPNRaceId(raceDateStr) {
     if (diff < bestDiff) { bestDiff = diff; bestId = id; }
   }
   if (!bestId) throw new Error('Could not match race date to an ESPN race ID.');
+  if (bestDiff > 7) throw new Error(`Closest ESPN race is ${bestDiff} days away from ${raceDateStr}. Verify the race date is correct before fetching.`);
   return bestId;
 }
 
@@ -112,7 +113,7 @@ export async function fetchRaceResults(raceDateStr, draftNames) {
       const score = matchScore(d.name, draftName);
       if (score > bestScore) { bestScore = score; bestDriver = d; }
     }
-    if (bestDriver && bestScore >= 40) {
+    if (bestDriver && bestScore >= 60) {
       result[draftName] = { finish: bestDriver.finish, stageWins: 0 };
     }
   }
