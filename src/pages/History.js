@@ -30,6 +30,24 @@ export default function History({ weeks, onEditWeek }) {
     );
   }
 
+  // Build driver draft counts
+  const driverCounts = {};
+  completed.forEach(week => {
+    week.billDrivers.forEach(d => {
+      if (!d.name) return;
+      if (!driverCounts[d.name]) driverCounts[d.name] = { bill: 0, don: 0 };
+      driverCounts[d.name].bill++;
+    });
+    week.donDrivers.forEach(d => {
+      if (!d.name) return;
+      if (!driverCounts[d.name]) driverCounts[d.name] = { bill: 0, don: 0 };
+      driverCounts[d.name].don++;
+    });
+  });
+  const driverList = Object.entries(driverCounts)
+    .map(([name, c]) => ({ name, bill: c.bill, don: c.don, total: c.bill + c.don }))
+    .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+
   const axisStyle = { fill: '#6b8aaa', fontSize: 11 };
   const gridStyle = { stroke: '#2a4060', strokeDasharray: '3 3' };
 
@@ -129,6 +147,34 @@ export default function History({ weeks, onEditWeek }) {
                   </tr>
                 );
               })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="card" style={{ marginTop: 16 }}>
+        <div className="card-header">
+          <span className="card-title">Driver Draft Count</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{driverList.length} drivers drafted</span>
+        </div>
+        <div className="table-scroll">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left' }}>Driver</th>
+                <th className="num" style={{ color: '#60a5fa' }}>Bill</th>
+                <th className="num" style={{ color: '#ef4444' }}>Don</th>
+                <th className="num">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {driverList.map(d => (
+                <tr key={d.name}>
+                  <td style={{ fontWeight: 600 }}>{d.name}</td>
+                  <td className="num" style={{ color: d.bill > 0 ? '#60a5fa' : 'var(--text-dim)' }}>{d.bill > 0 ? d.bill : '—'}</td>
+                  <td className="num" style={{ color: d.don > 0 ? '#ef4444' : 'var(--text-dim)' }}>{d.don > 0 ? d.don : '—'}</td>
+                  <td className="num" style={{ fontWeight: 700 }}>{d.total}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
