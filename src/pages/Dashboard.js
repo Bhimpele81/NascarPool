@@ -6,7 +6,13 @@ export default function Dashboard({ weeks, onAddWeek, onEditWeek, onDeleteWeek }
   const runningTotal = weeks.length > 0 ? (weeks[weeks.length - 1].runningTotal || 0) : 0;
   const leaderName = runningTotal > 0 ? 'Bill' : runningTotal < 0 ? 'Don' : null;
   const leaderAmt  = Math.abs(runningTotal);
-  const reversedWeeks = [...weeks].map((w, i) => ({ ...w, raceNum: i + 1 })).reverse();
+  const numberedWeeks = [...weeks].map((w, i) => ({ ...w, raceNum: i + 1 }));
+  const reversedWeeks = [...numberedWeeks].sort((a, b) => {
+    if (!a.raceDate && !b.raceDate) return 0;
+    if (!a.raceDate) return 1;
+    if (!b.raceDate) return -1;
+    return new Date(b.raceDate) - new Date(a.raceDate);
+  });
 
   return (
     <div>
