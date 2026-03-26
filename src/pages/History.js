@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { exportToCSV } from '../utils/scoring';
 
@@ -44,9 +44,23 @@ export default function History({ weeks, onEditWeek }) {
       driverCounts[d.name].don++;
     });
   });
+  const [driverSort, setDriverSort] = useState({ col: 'total', dir: 'desc' });
+
   const driverList = Object.entries(driverCounts)
     .map(([name, c]) => ({ name, bill: c.bill, don: c.don, total: c.bill + c.don }))
-    .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+    .sort((a, b) => {
+      const dir = driverSort.dir === 'desc' ? -1 : 1;
+      return (a[driverSort.col] - b[driverSort.col]) * dir || a.name.localeCompare(b.name);
+    });
+
+  function handleDriverSort(col) {
+    setDriverSort(prev => ({ col, dir: prev.col === col && prev.dir === 'desc' ? 'asc' : 'desc' }));
+  }
+
+  function sortArrow(col) {
+    if (driverSort.col !== col) return <span style={{ color: 'var(--text-dim)', marginLeft: 3 }}>↕</span>;
+    return <span style={{ marginLeft: 3 }}>{driverSort.dir === 'desc' ? '↓' : '↑'}</span>;
+  }
 
   const axisStyle = { fill: '#6b8aaa', fontSize: 11 };
   const gridStyle = { stroke: '#2a4060', strokeDasharray: '3 3' };
@@ -161,9 +175,9 @@ export default function History({ weeks, onEditWeek }) {
             <thead>
               <tr>
                 <th style={{ textAlign: 'left' }}>Driver</th>
-                <th className="num" style={{ color: '#60a5fa' }}>Bill</th>
-                <th className="num" style={{ color: '#ef4444' }}>Don</th>
-                <th className="num">Total</th>
+                <th className="num" style={{ color: '#60a5fa', cursor: 'pointer', userSelect: 'none' }} onClick={() => handleDriverSort('bill')}>Bill{sortArrow('bill')}</th>
+                <th className="num" style={{ color: '#ef4444', cursor: 'pointer', userSelect: 'none' }} onClick={() => handleDriverSort('don')}>Don{sortArrow('don')}</th>
+                <th className="num" style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleDriverSort('total')}>Total{sortArrow('total')}</th>
               </tr>
             </thead>
             <tbody>
