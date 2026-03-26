@@ -108,11 +108,13 @@ export default function RaceEntry({ week, onSave, onBack }) {
       });
 
       const total = form.billDrivers.length + form.donDrivers.length;
-      const unmatched = total - matched;
-      setAutoStatus('success');
+      const unmatchedNames = allNames.filter(n => n && !resultsMap[n]);
+      setAutoStatus(unmatchedNames.length > 0 ? 'warning' : 'success');
       setAutoMessage(
         `✓ Updated ${matched} of ${total} drivers from ESPN.${
-          unmatched > 0 ? ` ${unmatched} driver(s) not found — check names manually.` : ''
+          unmatchedNames.length > 0
+            ? ` Not found: ${unmatchedNames.join(', ')} — check names manually.`
+            : ''
         }`
       );
     } catch (err) {
@@ -146,14 +148,14 @@ export default function RaceEntry({ week, onSave, onBack }) {
       </div>
 
       {/* Auto-update status banner */}
-      {autoStatus && autoStatus !== 'loading' && (
+      {autoStatus && autoStatus !== 'loading' && (autoStatus === 'success' || autoStatus === 'warning' || autoStatus === 'error') && (
         <div style={{
           margin: '0 0 12px 0',
           padding: '10px 14px',
           borderRadius: 'var(--radius)',
-          background: autoStatus === 'success' ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
-          border: `1px solid ${autoStatus === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(239,68,68,0.3)'}`,
-          color: autoStatus === 'success' ? 'var(--green)' : 'var(--red)',
+          background: autoStatus === 'success' ? 'rgba(74,222,128,0.1)' : autoStatus === 'warning' ? 'rgba(251,191,36,0.1)' : 'rgba(239,68,68,0.1)',
+          border: `1px solid ${autoStatus === 'success' ? 'rgba(74,222,128,0.3)' : autoStatus === 'warning' ? 'rgba(251,191,36,0.3)' : 'rgba(239,68,68,0.3)'}`,
+          color: autoStatus === 'success' ? 'var(--green)' : autoStatus === 'warning' ? 'var(--yellow)' : 'var(--red)',
           fontSize: 13,
           fontWeight: 600,
         }}>
