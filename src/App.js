@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { loadData, saveData, emptyWeek } from './utils/storage';
 import { calcWeeklyMoney } from './utils/scoring';
 import Dashboard from './pages/Dashboard';
@@ -13,6 +13,7 @@ export default function App() {
   const [data, setData] = useState(null);
   const [editingWeekId, setEditingWeekId] = useState(null);
   const [syncing, setSyncing] = useState(false);
+  const isInitialLoad = useRef(true);
 
   useEffect(() => {
     loadData().then(d => {
@@ -22,6 +23,11 @@ export default function App() {
 
   useEffect(() => {
     if (!data) return;
+    // Skip saving on the initial load — only save on user-driven changes
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return;
+    }
     setSyncing(true);
     saveData(data).finally(() => setSyncing(false));
   }, [data]);
