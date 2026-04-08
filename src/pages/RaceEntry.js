@@ -248,7 +248,24 @@ export default function RaceEntry({ week, onSave, onBack }) {
   );
 }
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 600);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 600);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return isMobile;
+}
+
+function lastNameOf(fullName) {
+  if (!fullName) return '';
+  const parts = fullName.trim().split(' ');
+  return parts.length > 1 ? parts.slice(-1)[0] : fullName;
+}
+
 function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
+  const isMobile = useIsMobile();
   const teamTotal = drivers.reduce((s, d) => s + calcDriverPoints(d.finish, d.tier, d.stageWins).total, 0);
   return (
     <div className="card">
@@ -276,17 +293,32 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
               <tr key={d.id} style={isWinner ? { background: 'rgba(37,99,235,0.08)' } : {}}>
                 <td style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{tierLabel(i)}</td>
                 <td>
-                  <input
-                    className="form-input"
-                    list={`drivers-${team}-${i}`}
-                    placeholder="— Driver —"
-                    value={d.name}
-                    onChange={e => onUpdate(i, 'name', e.target.value)}
-                    style={{ fontSize: 12, padding: '4px 6px', width: '100%' }}
-                  />
-                  <datalist id={`drivers-${team}-${i}`}>
-                    {NASCAR_DRIVERS.map(n => <option key={n} value={n} />)}
-                  </datalist>
+                  {isMobile && d.name ? (
+                    <span
+                      className="driver-name-mobile"
+                      onClick={() => {
+                        const val = window.prompt('Driver name:', d.name);
+                        if (val !== null) onUpdate(i, 'name', val);
+                      }}
+                      style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', cursor: 'pointer', display: 'block', padding: '4px 0' }}
+                    >
+                      {lastNameOf(d.name)}
+                    </span>
+                  ) : (
+                    <>
+                      <input
+                        className="form-input"
+                        list={`drivers-${team}-${i}`}
+                        placeholder="— Driver —"
+                        value={d.name}
+                        onChange={e => onUpdate(i, 'name', e.target.value)}
+                        style={{ fontSize: 12, padding: '4px 6px', width: '100%' }}
+                      />
+                      <datalist id={`drivers-${team}-${i}`}>
+                        {NASCAR_DRIVERS.map(n => <option key={n} value={n} />)}
+                      </datalist>
+                    </>
+                  )}
                 </td>
                 <td>
                   <input className="form-input" type="number" min="1" max="43" placeholder="—"
