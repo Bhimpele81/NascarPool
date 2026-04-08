@@ -88,9 +88,10 @@ Each time a player has the race-winning driver on their roster, they earn 1 play
 
 ### Race Day (after the race)
 1. Click the race on the dashboard
-2. Enter finish positions and stage wins for all 12 drivers
-3. Points and money calculate automatically in real time
-4. Click **✓ Complete** to mark the race done
+2. Click **Auto Update Results** to pull finish positions from ESPN automatically
+3. Verify and adjust any unmatched drivers or stage wins manually
+4. Points and money calculate automatically in real time
+5. Click **✓ Complete** to mark the race done
 
 ---
 
@@ -160,7 +161,15 @@ Interval: 5 minutes
 
 ---
 
+## Mobile Optimizations
+
+- **Driver names** display as clean plain text (last names only) on mobile — no input boxes, larger font, high contrast
+- Tap any driver name to edit it via prompt
+- Empty driver slots still show the full input field with autocomplete
+- Desktop view remains unchanged with full input boxes and datalist autocomplete
+
+---
+
 ## Coming Soon
 
-- Live race results via NASCAR API (auto-fill finish positions after the race)
 - Playoff scoring system
