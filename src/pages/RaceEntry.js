@@ -276,12 +276,12 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
       <table className="data-table" style={{ tableLayout: 'fixed', width: '100%' }}>
         <thead>
           <tr>
-            <th style={{ width: 75 }}>Tier</th>
+            <th style={{ width: isMobile ? 55 : 75 }}>{isMobile ? 'Tier' : 'Tier'}</th>
             <th>Driver</th>
             <th style={{ width: 48, textAlign: 'center' }}>Fin</th>
             <th style={{ width: 44, textAlign: 'center' }}>Stg</th>
-            <th className="num" style={{ width: 38 }}>T10</th>
-            <th className="num" style={{ width: 38 }}>Stg</th>
+            {!isMobile && <th className="num" style={{ width: 38 }}>T10</th>}
+            {!isMobile && <th className="num" style={{ width: 38 }}>Stg</th>}
             <th className="num" style={{ width: 58 }}>Total</th>
           </tr>
         </thead>
@@ -291,7 +291,7 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
             const isWinner = parseInt(d.finish, 10) === 1;
             return (
               <tr key={d.id} style={isWinner ? { background: 'rgba(37,99,235,0.08)' } : {}}>
-                <td style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{tierLabel(i)}</td>
+                <td style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{isMobile ? `T${tierForIndex(i)}` : tierLabel(i)}</td>
                 <td>
                   {isMobile && d.name ? (
                     <span
@@ -330,8 +330,8 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
                     value={d.stageWins} onChange={e => onUpdate(i, 'stageWins', e.target.value)}
                     style={{ textAlign: 'center', fontSize: 12, padding: '4px 2px' }} />
                 </td>
-                <td className="num" style={{ fontSize: 12 }}>{pts.top10Pts > 0 ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>{pts.top10Pts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
-                <td className="num" style={{ fontSize: 12 }}>{pts.stagePts > 0 ? <span style={{ color: 'var(--blue-light)', fontWeight: 600 }}>{pts.stagePts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>
+                {!isMobile && <td className="num" style={{ fontSize: 12 }}>{pts.top10Pts > 0 ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>{pts.top10Pts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>}
+                {!isMobile && <td className="num" style={{ fontSize: 12 }}>{pts.stagePts > 0 ? <span style={{ color: 'var(--blue-light)', fontWeight: 600 }}>{pts.stagePts}</span> : <span style={{ color: 'var(--text-dim)' }}>—</span>}</td>}
                 <td className="num" style={{ position: 'relative' }}>
                   {d.finish ? <strong style={{ fontSize: 13, color: isWinner ? 'var(--green)' : 'var(--text)' }}>{pts.total.toFixed(1)}</strong> : <span style={{ color: 'var(--text-dim)' }}>—</span>}
                   {isWinner && <span style={{ position: 'absolute', marginLeft: 2, fontSize: 10 }}>🏆</span>}
@@ -342,7 +342,7 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
         </tbody>
         <tfoot>
           <tr className="total-row">
-            <td colSpan={6} style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: 11, color: 'var(--text-muted)' }}>Team Total</td>
+            <td colSpan={isMobile ? 4 : 6} style={{ fontWeight: 700, textTransform: 'uppercase', fontSize: 11, color: 'var(--text-muted)' }}>Team Total</td>
             <td className="num" style={{ fontSize: 15, fontWeight: 800, color: 'var(--blue-pale)' }}>{teamTotal > 0 ? teamTotal.toFixed(1) : '—'}</td>
           </tr>
         </tfoot>
