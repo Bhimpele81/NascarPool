@@ -127,6 +127,9 @@ Each time a player has the race-winning driver on their roster, they earn 1 play
 - **Driver names** display as clean plain text (last names only) on mobile — no input boxes, larger font, high contrast
 - Tap any driver name to edit it via prompt
 - Empty driver slots still show the full input field with autocomplete
+- **T10 and Stage bonus columns hidden** on mobile to give driver names more room
+- **Tier labels shortened** from "T1 (1-12)" to "T1" on mobile
+- Mobile breakpoint set at **768px** to cover larger phones and tablets
 - Dashboard switches from table to compact card layout on mobile
 - Responsive grid layouts adapt to screen width with resize detection
 - Desktop view remains unchanged with full input boxes and datalist autocomplete
