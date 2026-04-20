@@ -7,6 +7,7 @@ export default function History({ weeks, onEditWeek }) {
 
   const chartData = completed.map((w, i) => ({
     name: w.track || `R${i+1}`,
+    raceNum: i + 1,
     bill: parseFloat(w.result.billPts.toFixed(1)),
     don:  parseFloat(w.result.donPts.toFixed(1)),
     running: w.runningTotal,
@@ -98,11 +99,15 @@ export default function History({ weeks, onEditWeek }) {
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
                   <CartesianGrid {...gridStyle} />
-                  <XAxis dataKey="name" tick={axisStyle} />
+                  <XAxis dataKey="raceNum" tick={axisStyle} />
                   <YAxis tick={axisStyle} width={40} />
                   <Tooltip
                     contentStyle={{ background: '#1a2d42', border: '1px solid #2a4060', borderRadius: 6, fontSize: 12 }}
                     labelStyle={{ color: '#e2eaf4' }}
+                    labelFormatter={(num) => {
+                      const row = chartData.find(d => d.raceNum === num);
+                      return row ? `Race ${num}: ${row.name}` : `Race ${num}`;
+                    }}
                   />
                   <Legend wrapperStyle={{ fontSize: 12, color: '#6b8aaa' }} />
                   <Bar dataKey="bill" name="Bill" fill="#2563eb" radius={[3,3,0,0]} />
