@@ -2,7 +2,12 @@
 // Fetches the ESPN race results page via a CORS proxy and parses finish positions.
 // Stage wins are not available from ESPN HTML — enter those manually.
 
-const CORS_PROXY = 'https://api.allorigins.win/get?url=';
+const CORS_PROXIES = [
+  (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+  (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
+];
 const ESPN_SCHEDULE_URL = 'https://www.espn.com/racing/schedule/_/series/sprint';
 
 function normalizeName(name) {
@@ -28,12 +33,24 @@ function matchScore(espnName, draftName) {
 }
 
 async function proxyFetch(targetUrl) {
-  const proxied = `${CORS_PROXY}${encodeURIComponent(targetUrl)}`;
-  const res = await fetch(proxied);
-  if (!res.ok) throw new Error(`Proxy fetch failed: ${res.status}`);
-  const json = await res.json();
-  if (!json.contents) throw new Error('Proxy returned empty contents.');
-  return json.contents;
+  for (const makeProxy of CORS_PROXIES) {
+    try {
+      const res = await fetch(makeProxy(targetUrl));
+      if (!res.ok) continue;
+      const text = await res.text();
+      // allorigins & codetabs return JSON with a contents field; others return raw HTML
+      try {
+        const json = JSON.parse(text);
+        if (json.contents) return json.contents;
+        if (typeof json === 'string' && json.length > 100) return json;
+      } catch {
+        if (text && text.length > 100) return text;
+      }
+    } catch {
+      continue;
+    }
+  }
+  throw new Error('All proxies failed. ESPN results are temporarily unavailable — try again in a few minutes.');
 }
 
 /**
