@@ -3,10 +3,9 @@
 // Stage wins are not available from ESPN HTML — enter those manually.
 
 const CORS_PROXIES = [
+  (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
   (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
   (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-  (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
 ];
 const ESPN_SCHEDULE_URL = 'https://www.espn.com/racing/schedule/_/series/sprint';
 
@@ -35,14 +34,16 @@ function matchScore(espnName, draftName) {
 async function proxyFetch(targetUrl) {
   for (const makeProxy of CORS_PROXIES) {
     try {
-      const res = await fetch(makeProxy(targetUrl));
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(makeProxy(targetUrl), { signal: controller.signal });
+      clearTimeout(timeout);
       if (!res.ok) continue;
       const text = await res.text();
-      // allorigins & codetabs return JSON with a contents field; others return raw HTML
+      // allorigins returns JSON with a contents field; others return raw HTML
       try {
         const json = JSON.parse(text);
-        if (json.contents) return json.contents;
-        if (typeof json === 'string' && json.length > 100) return json;
+        if (json.contents && json.contents.length > 100) return json.contents;
       } catch {
         if (text && text.length > 100) return text;
       }
@@ -80,7 +81,7 @@ function parseESPNResultsTable(html) {
 
 async function getESPNRaceId(raceDateStr) {
   const html = await proxyFetch(ESPN_SCHEDULE_URL);
-  const raceRegex = /raceId=(\d+)&series=sprint/g;
+  const raceRegex = /raceId[=/](\d{10,})/g;
   const ids = new Set();
   let match;
   while ((match = raceRegex.exec(html)) !== null) ids.add(match[1]);
