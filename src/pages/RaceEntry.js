@@ -68,6 +68,13 @@ export default function RaceEntry({ week, onSave, onBack }) {
   }
 
   async function handleAutoUpdate() {
+    const code = window.prompt('Enter passcode to auto-update results:');
+    if (code === null) return; // cancelled
+    if (code !== '1716') {
+      setAutoStatus('error');
+      setAutoMessage('Incorrect passcode. Results not updated.');
+      return;
+    }
     setAutoStatus('loading');
     setAutoMessage('');
     try {
