@@ -17,6 +17,9 @@ export default function Rules() {
                 <tr><td><span className="tier-label">Tier 3</span></td><td>26+</td><td>1.66×</td><td><strong>2 drivers</strong></td></tr>
               </tbody>
             </table>
+            <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--navy-light)', border: '1px solid var(--navy-border)', borderRadius: 6, fontSize: 13, color: 'var(--text)' }}>
+              <strong style={{ color: 'var(--red)' }}>Eligibility:</strong> A driver with odds of <strong>+200 or more favorable</strong> (e.g. +150, +100, −200) is <strong>not eligible</strong> to be drafted. Only longer shots (worse than +200, e.g. +250, +500) may be drafted.
+            </div>
           </div>
         </div>
 
