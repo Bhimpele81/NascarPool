@@ -12,13 +12,23 @@ export default function App() {
   const [page, setPage] = useState('dashboard');
   const [data, setData] = useState(null);
   const [editingWeekId, setEditingWeekId] = useState(null);
-  const [syncing, setSyncing] = useState(false);
+  // 'idle' | 'saving' | 'saved' | 'error' | 'conflict'
+  const [saveStatus, setSaveStatus] = useState('idle');
   const isInitialLoad = useRef(true);
+  const saveTimer = useRef(null);
+  const pageRef = useRef(page);
+  pageRef.current = page;
+
+  function reloadFromCloud() {
+    return loadData().then(d => {
+      setData({ ...d, weeks: recalcRunningTotals(d.weeks) });
+      setSaveStatus('idle');
+    });
+  }
 
   useEffect(() => {
-    loadData().then(d => {
-      setData({ ...d, weeks: recalcRunningTotals(d.weeks) });
-    });
+    reloadFromCloud();
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -28,9 +38,34 @@ export default function App() {
       isInitialLoad.current = false;
       return;
     }
-    setSyncing(true);
-    saveData(data).finally(() => setSyncing(false));
+    // Debounce: avoid a network write on every keystroke.
+    setSaveStatus('saving');
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      saveData(data).then(res => {
+        if (res.ok) setSaveStatus('saved');
+        else if (res.conflict) setSaveStatus('conflict');
+        else setSaveStatus('error');
+      });
+    }, 700);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [data]);
+
+  // When returning to this tab/device, pull the latest from the cloud — but
+  // never while editing, so we don't wipe in-progress entry on this device.
+  useEffect(() => {
+    function onFocus() {
+      if (document.visibilityState === 'hidden') return;
+      if (pageRef.current === 'entry') return;
+      reloadFromCloud();
+    }
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, []);
 
   function addWeek() {
     const week = emptyWeek();
@@ -74,7 +109,9 @@ export default function App() {
   <span className="brand-sub">Bill vs Don · 2026</span>
 </div>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            {syncing && <span style={{ fontSize:11, color:'var(--text-muted)' }}>Saving...</span>}
+            {saveStatus === 'saving' && <span style={{ fontSize:11, color:'var(--text-muted)' }}>Saving...</span>}
+            {saveStatus === 'saved'  && <span style={{ fontSize:11, color:'var(--green)' }}>Saved ✓</span>}
+            {saveStatus === 'error'  && <span style={{ fontSize:11, color:'var(--red)', fontWeight:700 }}>Save failed — check connection</span>}
             <nav className="header-nav">
               <button className={page==='dashboard' ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('dashboard')}>Dashboard</button>
               <button className={page==='history'   ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('history')}>History</button>
@@ -87,8 +124,23 @@ export default function App() {
         </div>
       </header>
       <main className="app-main">
+        {saveStatus === 'conflict' && (
+          <div style={{
+            margin: '0 0 14px 0', padding: '12px 16px', borderRadius: 8,
+            background: 'rgba(220,53,69,0.12)', border: '1px solid var(--red)',
+            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap'
+          }}>
+            <span style={{ fontWeight: 700, color: 'var(--red)' }}>⚠ This was updated on another device.</span>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              Your changes here were not saved, to avoid overwriting the newer version. Reload the latest, then re-apply your edits.
+            </span>
+            <button className="btn btn-secondary" style={{ marginLeft: 'auto' }} onClick={reloadFromCloud}>
+              Reload latest
+            </button>
+          </div>
+        )}
         {page==='dashboard' && <Dashboard weeks={data.weeks} onAddWeek={addWeek} onEditWeek={editWeek} onDeleteWeek={deleteWeek} />}
-        {page==='entry' && currentWeek && <RaceEntry week={currentWeek} onSave={saveWeek} onBack={() => setPage('dashboard')} />}
+        {page==='entry' && currentWeek && <RaceEntry week={currentWeek} onSave={saveWeek} onBack={() => setPage('dashboard')} saveStatus={saveStatus} />}
         {page==='history' && <History weeks={data.weeks} onEditWeek={editWeek} />}
         {page==='rules' && <Rules />}
         {page==='picks' && <DraftPicks weeks={data.weeks} />}

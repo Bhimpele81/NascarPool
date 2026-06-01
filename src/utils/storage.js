@@ -155,12 +155,16 @@ function localSave(data) {
   try { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); } catch {}
 }
 
+// Timestamp of the cloud row this client last loaded or successfully wrote.
+// Used for optimistic concurrency so a stale device can't clobber newer data.
+let lastKnownUpdatedAt = null;
+
 // ── Supabase load ──────────────────────────────────────────
 export async function loadData() {
   try {
     const { data, error } = await supabase
       .from('race_weeks')
-      .select('data')
+      .select('data, updated_at')
       .eq('id', ROW_ID)
       .single();
 
@@ -172,6 +176,7 @@ export async function loadData() {
       return seed;
     }
 
+    lastKnownUpdatedAt = data.updated_at;
     localSave(data.data); // keep local in sync
     return data.data;
   } catch (err) {
@@ -181,13 +186,62 @@ export async function loadData() {
 }
 
 // ── Supabase save ──────────────────────────────────────────
+// Returns one of:
+//   { ok: true }
+//   { ok: false, conflict: true }  — cloud has newer data from another device
+//   { ok: false, error }           — network/DB failure (kept locally)
 export async function saveData(appData) {
-  localSave(appData); // always save locally first
+  localSave(appData); // always keep a local copy no matter what
+  const newTimestamp = new Date().toISOString();
+
   try {
-    await supabase
+    // First write of this session (or row missing): create/replace outright.
+    if (lastKnownUpdatedAt == null) {
+      const { error } = await supabase
+        .from('race_weeks')
+        .upsert({ id: ROW_ID, data: appData, updated_at: newTimestamp });
+      if (error) { console.warn('Supabase save failed:', error); return { ok: false, error }; }
+      lastKnownUpdatedAt = newTimestamp;
+      return { ok: true };
+    }
+
+    // Optimistic lock: only overwrite if the cloud copy is still the one we loaded.
+    const { data: rows, error } = await supabase
       .from('race_weeks')
-      .upsert({ id: ROW_ID, data: appData, updated_at: new Date().toISOString() });
+      .update({ data: appData, updated_at: newTimestamp })
+      .eq('id', ROW_ID)
+      .eq('updated_at', lastKnownUpdatedAt)
+      .select('updated_at');
+
+    if (error) { console.warn('Supabase save failed:', error); return { ok: false, error }; }
+
+    if (rows && rows.length > 0) {
+      lastKnownUpdatedAt = rows[0].updated_at;
+      return { ok: true };
+    }
+
+    // 0 rows matched — figure out whether the row vanished or was changed elsewhere.
+    const { data: current } = await supabase
+      .from('race_weeks')
+      .select('updated_at')
+      .eq('id', ROW_ID)
+      .single();
+
+    if (!current) {
+      // Row disappeared — recreate it.
+      const { error: upErr } = await supabase
+        .from('race_weeks')
+        .upsert({ id: ROW_ID, data: appData, updated_at: newTimestamp });
+      if (upErr) { console.warn('Supabase save failed:', upErr); return { ok: false, error: upErr }; }
+      lastKnownUpdatedAt = newTimestamp;
+      return { ok: true };
+    }
+
+    // Another device wrote a newer version after we loaded — refuse to clobber it.
+    console.warn('Save conflict: cloud is newer than this device.');
+    return { ok: false, conflict: true, serverUpdatedAt: current.updated_at };
   } catch (err) {
     console.warn('Supabase save failed, data kept locally:', err);
+    return { ok: false, error: err };
   }
 }

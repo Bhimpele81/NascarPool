@@ -22,13 +22,12 @@ const NASCAR_DRIVERS = [
 function tierForIndex(i) { return i < 2 ? '1' : i < 4 ? '2' : '3'; }
 function tierLabel(i) { return i < 2 ? 'T1 (1–12)' : i < 4 ? 'T2 (13–25)' : 'T3 (26+)'; }
 
-export default function RaceEntry({ week, onSave, onBack }) {
+export default function RaceEntry({ week, onSave, onBack, saveStatus }) {
   const [form, setForm] = useState(() => {
     const fixTiers = (drivers) => drivers.map((d, i) => ({ ...d, tier: tierForIndex(i) }));
     return { ...week, billDrivers: fixTiers(week.billDrivers), donDrivers: fixTiers(week.donDrivers) };
   });
   const [errors, setErrors] = useState([]);
-  const [saved, setSaved] = useState(false);
   const [autoStatus, setAutoStatus] = useState(null); // null | 'loading' | 'success' | 'error'
   const [autoMessage, setAutoMessage] = useState('');
 
@@ -50,7 +49,6 @@ export default function RaceEntry({ week, onSave, onBack }) {
       drivers[idx] = { ...drivers[idx], [field]: val, tier: tierForIndex(idx) };
       return { ...prev, [team]: drivers };
     });
-    setSaved(false);
   }
 
   function handleSave(markComplete) {
@@ -62,8 +60,6 @@ export default function RaceEntry({ week, onSave, onBack }) {
       setErrors([]);
     }
     onSave({ ...form, result: computeResult(form), completed: markComplete || form.completed });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
     if (markComplete) onBack();
   }
 
@@ -140,7 +136,10 @@ export default function RaceEntry({ week, onSave, onBack }) {
         <button className="btn btn-ghost" onClick={onBack}>← Back</button>
         <button className="btn btn-secondary" onClick={() => handleSave(false)}>Save Draft</button>
         <button className="btn btn-green" onClick={() => handleSave(true)}>✓ Complete</button>
-        {saved && <span style={{ color: 'var(--green)', fontWeight: 700 }}>Saved!</span>}
+        {saveStatus === 'saving'   && <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Saving…</span>}
+        {saveStatus === 'saved'    && <span style={{ color: 'var(--green)', fontWeight: 700 }}>Saved ✓</span>}
+        {saveStatus === 'error'    && <span style={{ color: 'var(--red)', fontWeight: 700 }}>Save failed — check connection</span>}
+        {saveStatus === 'conflict' && <span style={{ color: 'var(--red)', fontWeight: 700 }}>Newer data on another device — go back &amp; reload</span>}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
           {form.completed && <span className="badge badge-green">Completed</span>}
           <button
