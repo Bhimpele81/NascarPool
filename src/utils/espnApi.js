@@ -1,13 +1,9 @@
 // NASCAR race results fetcher
-// Fetches the ESPN race results page via a CORS proxy and parses finish positions.
-// Stage wins are not available from ESPN HTML — enter those manually.
+// Uses ESPN's official JSON API, which sends `Access-Control-Allow-Origin: *`,
+// so the browser can call it directly — no CORS proxy or HTML scraping needed.
+// Stage wins are not exposed by this endpoint — enter those manually.
 
-const CORS_PROXIES = [
-  (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-  (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-  (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-];
-const ESPN_SCHEDULE_URL = 'https://www.espn.com/racing/schedule/_/series/sprint';
+const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports/racing/nascar-premier';
 
 function normalizeName(name) {
   return (name || '')
@@ -31,80 +27,59 @@ function matchScore(espnName, draftName) {
   return 0;
 }
 
-async function proxyFetch(targetUrl) {
-  for (const makeProxy of CORS_PROXIES) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
-      const res = await fetch(makeProxy(targetUrl), { signal: controller.signal });
-      clearTimeout(timeout);
-      if (!res.ok) continue;
-      const text = await res.text();
-      // allorigins returns JSON with a contents field; others return raw HTML
-      try {
-        const json = JSON.parse(text);
-        if (json.contents && json.contents.length > 100) return json.contents;
-      } catch {
-        if (text && text.length > 100) return text;
-      }
-    } catch {
-      continue;
-    }
+function ymd(dateStr) {
+  return (dateStr || '').replace(/-/g, '');
+}
+
+async function getJSON(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) throw new Error(`ESPN responded ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timeout);
   }
-  throw new Error('All proxies failed. ESPN results are temporarily unavailable — try again in a few minutes.');
 }
 
 /**
- * Parse ESPN race results HTML — extract POS and DRIVER only.
- * Columns: POS | DRIVER | CAR | MANUFACTURER | LAPS | START | LED | PTS | BONUS | PENALTY
+ * Find the ESPN race event closest to the given date.
+ * Tries the exact date first, then a ±4-day window, then picks the nearest.
  */
-function parseESPNResultsTable(html) {
-  const drivers = [];
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const rows = doc.querySelectorAll('table tr');
-    rows.forEach(row => {
-      const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
-      if (cells.length < 2) return;
-      const pos  = parseInt(cells[0], 10);
-      const name = cells[1];
-      if (!pos || !name || pos > 43) return;
-      drivers.push({ name, finish: pos, stageWins: 0 });
-    });
-  } catch (e) {
-    throw new Error('Failed to parse ESPN results table: ' + e.message);
-  }
-  if (drivers.length === 0) throw new Error('No driver rows found in ESPN results page.');
-  return drivers;
-}
+async function findEvent(raceDateStr) {
+  const target = ymd(raceDateStr);
 
-async function getESPNRaceId(raceDateStr) {
-  const html = await proxyFetch(ESPN_SCHEDULE_URL);
-  const raceRegex = /raceId[=/](\d{10,})/g;
-  const ids = new Set();
-  let match;
-  while ((match = raceRegex.exec(html)) !== null) ids.add(match[1]);
-  if (ids.size === 0) throw new Error('No race IDs found on ESPN schedule page.');
-
-  if (!raceDateStr) return [...ids].pop();
-
-  const target = raceDateStr.replace(/-/g, '');
-  for (const id of ids) {
-    if (id.startsWith(target)) return id;
+  // 1. Exact date
+  if (target) {
+    const exact = await getJSON(`${ESPN_BASE}/scoreboard?dates=${target}`);
+    if (exact.events && exact.events.length > 0) return exact.events[0];
   }
 
-  const targetNum = parseInt(target, 10);
-  let bestId = null, bestDiff = Infinity;
-  for (const id of ids) {
-    const dateStr = id.slice(0, 8);
-    if (!/^\d{8}$/.test(dateStr)) continue;
-    const diff = Math.abs(parseInt(dateStr, 10) - targetNum);
-    if (diff < bestDiff) { bestDiff = diff; bestId = id; }
+  // 2. ±4-day window, pick the event nearest the target date
+  if (target && /^\d{8}$/.test(target)) {
+    const t = new Date(`${raceDateStr}T12:00:00`);
+    const fmt = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    const start = new Date(t); start.setDate(start.getDate() - 4);
+    const end   = new Date(t); end.setDate(end.getDate() + 4);
+
+    const range = await getJSON(`${ESPN_BASE}/scoreboard?dates=${fmt(start)}-${fmt(end)}`);
+    const events = range.events || [];
+    if (events.length === 0) {
+      throw new Error(`No NASCAR Cup race found near ${raceDateStr}. Check the race date is correct.`);
+    }
+    let best = null, bestDiff = Infinity;
+    for (const e of events) {
+      const diff = Math.abs(new Date(e.date) - t);
+      if (diff < bestDiff) { bestDiff = diff; best = e; }
+    }
+    return best;
   }
-  if (!bestId) throw new Error('Could not match race date to an ESPN race ID.');
-  if (bestDiff > 7) throw new Error(`Closest ESPN race is ${bestDiff} days away from ${raceDateStr}. Verify the race date is correct before fetching.`);
-  return bestId;
+
+  // 3. No date given — use the most recent event on the default scoreboard
+  const latest = await getJSON(`${ESPN_BASE}/scoreboard`);
+  if (latest.events && latest.events.length > 0) return latest.events[latest.events.length - 1];
+  throw new Error('Could not find any NASCAR Cup race on ESPN.');
 }
 
 /**
@@ -116,12 +91,33 @@ async function getESPNRaceId(raceDateStr) {
  * @returns {Promise<Object>}    - { [draftName]: { finish, stageWins } }
  */
 export async function fetchRaceResults(raceDateStr, draftNames) {
-  const raceId  = await getESPNRaceId(raceDateStr);
-  const pageUrl = `https://www.espn.com/racing/raceresults?series=sprint&raceId=${raceId}`;
-  const html    = await proxyFetch(pageUrl);
-  const drivers = parseESPNResultsTable(html);
+  let event;
+  try {
+    event = await findEvent(raceDateStr);
+  } catch (err) {
+    throw new Error(err.message || 'Could not reach ESPN. Try again in a few minutes.');
+  }
 
-  console.info(`[fetchRaceResults] raceId=${raceId}, drivers found: ${drivers.length}`);
+  const comp = event.competitions && event.competitions[0];
+  const statusName = comp?.status?.type?.name;
+  const competitors = comp?.competitors || [];
+
+  if (competitors.length === 0) {
+    throw new Error(`ESPN has no results yet for "${event.name}". The race may not have started.`);
+  }
+  if (statusName && statusName !== 'STATUS_FINAL') {
+    throw new Error(`"${event.name}" is not final yet on ESPN (status: ${statusName}). Try again after the race finishes.`);
+  }
+
+  // Build a finish list: { name, finish }
+  const drivers = competitors
+    .map(c => ({
+      name: c.athlete?.fullName || c.athlete?.displayName || '',
+      finish: parseInt(c.order, 10),
+    }))
+    .filter(d => d.name && d.finish && d.finish >= 1 && d.finish <= 43);
+
+  console.info(`[fetchRaceResults] event="${event.name}", drivers found: ${drivers.length}`);
 
   const result = {};
   for (const draftName of draftNames) {
