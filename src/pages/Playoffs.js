@@ -36,7 +36,7 @@ export default function Playoffs({ weeks, playoffs, onSave }) {
   function generateBoard() {
     const blank = (owner, n) =>
       Array.from({ length: n }, () => ({ id: generateId(), owner, name: '', position: '' }));
-    update([...blank('Don', picks.don), ...blank('Bill', picks.bill)]);
+    update([...blank('Bill', picks.bill), ...blank('Don', picks.don)]);
   }
 
   function updateDriver(id, field, val) {
@@ -60,8 +60,8 @@ export default function Playoffs({ weeks, playoffs, onSave }) {
     <div>
       {/* ── Picks earned ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-        <PickCard name="Don"  count={picks.don}  drafted={result.donRows.length}  color="var(--red)" />
         <PickCard name="Bill" count={picks.bill} drafted={result.billRows.length} color="var(--blue-light)" />
+        <PickCard name="Don"  count={picks.don}  drafted={result.donRows.length}  color="var(--red)" />
       </div>
 
       {/* ── Payout summary ── */}
@@ -76,7 +76,7 @@ export default function Playoffs({ weeks, playoffs, onSave }) {
           </div>
           <div className="winner-sub">
             {result.scored
-              ? `Don ${money(result.donGross)} · Bill ${money(result.billGross)}`
+              ? `Bill ${money(result.billGross)} · Don ${money(result.donGross)}`
               : `Enter final chase positions below to score the last ${PLAYOFF_RACES} races`}
           </div>
         </div>
@@ -102,7 +102,7 @@ export default function Playoffs({ weeks, playoffs, onSave }) {
             <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
               {picks.total === 0
                 ? 'No picks earned yet. Draft a race winner during the regular season to earn playoff picks.'
-                : `Don gets ${picks.don} drivers, Bill gets ${picks.bill}. Build the board to start the draft.`}
+                : `Bill gets ${picks.bill} drivers, Don gets ${picks.don}. Build the board to start the draft.`}
             </div>
             {picks.total > 0 && (
               <button className="btn btn-primary" style={{ marginLeft: 'auto' }} onClick={generateBoard}>
@@ -113,8 +113,8 @@ export default function Playoffs({ weeks, playoffs, onSave }) {
         </div>
       ) : (
         <div className="driver-tables-grid">
-          <Roster owner="Don"  rows={result.donRows}  earned={picks.don}  {...rosterProps} />
           <Roster owner="Bill" rows={result.billRows} earned={picks.bill} {...rosterProps} />
+          <Roster owner="Don"  rows={result.donRows}  earned={picks.don}  {...rosterProps} />
         </div>
       )}
 
@@ -135,16 +135,16 @@ export default function Playoffs({ weeks, playoffs, onSave }) {
         <div className="card-body">
           <div className="money-breakdown-grid">
             <Breakdown
-              name="Don" color="var(--red)"
-              pts={result.donPts} fromPoints={result.donFromPoints}
-              champBonus={result.donChampBonus} leaderBonus={result.donLeaderBonus}
-              gross={result.donGross}
-            />
-            <Breakdown
               name="Bill" color="var(--blue-light)"
               pts={result.billPts} fromPoints={result.billFromPoints}
               champBonus={result.billChampBonus} leaderBonus={result.billLeaderBonus}
               gross={result.billGross}
+            />
+            <Breakdown
+              name="Don" color="var(--red)"
+              pts={result.donPts} fromPoints={result.donFromPoints}
+              champBonus={result.donChampBonus} leaderBonus={result.donLeaderBonus}
+              gross={result.donGross}
             />
           </div>
           <div style={{
