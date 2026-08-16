@@ -1,53 +1,8 @@
 import React from 'react';
+import { countDraftPicks, buildDraftOrder } from '../utils/playoffs';
 
 export default function DraftPicks({ weeks }) {
-  const pickHistory = weeks
-    .filter(w => w.completed && w.result)
-    .map((w, i) => {
-      const billHasWinner = w.billDrivers.some(d => parseInt(d.finish, 10) === 1);
-      const donHasWinner  = w.donDrivers.some(d => parseInt(d.finish, 10) === 1);
-      const winner = billHasWinner ? 'Bill' : donHasWinner ? 'Don' : null;
-      const winningDriver = billHasWinner
-        ? w.billDrivers.find(d => parseInt(d.finish, 10) === 1)?.name
-        : donHasWinner
-        ? w.donDrivers.find(d => parseInt(d.finish, 10) === 1)?.name
-        : null;
-      return { race: i + 1, track: w.track || w.raceName, winner, winningDriver, date: w.raceDate };
-    })
-    .filter(w => w.winner);
-
-  const billPicks = pickHistory.filter(w => w.winner === 'Bill').length;
-  const donPicks  = pickHistory.filter(w => w.winner === 'Don').length;
-  const totalPicks = billPicks + donPicks;
-
-  function buildDraftOrder(bill, don) {
-    const total = bill + don;
-    const order = [];
-    let b = bill, d = don;
-    let first = bill >= don ? 'Bill' : 'Don';
-    let second = first === 'Bill' ? 'Don' : 'Bill';
-    for (let i = 0; i < total; i++) {
-      if (i % 2 === 0) {
-        if ((first === 'Bill' && b > 0) || (first === 'Don' && d > 0)) {
-          order.push(first);
-          first === 'Bill' ? b-- : d--;
-        } else {
-          order.push(second);
-          second === 'Bill' ? b-- : d--;
-        }
-      } else {
-        if ((second === 'Bill' && b > 0) || (second === 'Don' && d > 0)) {
-          order.push(second);
-          second === 'Bill' ? b-- : d--;
-        } else {
-          order.push(first);
-          first === 'Bill' ? b-- : d--;
-        }
-      }
-    }
-    return order;
-  }
-
+  const { bill: billPicks, don: donPicks, total: totalPicks, history: pickHistory } = countDraftPicks(weeks);
   const draftOrder = buildDraftOrder(billPicks, donPicks);
 
   return (

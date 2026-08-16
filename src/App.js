@@ -6,6 +6,7 @@ import RaceEntry from './pages/RaceEntry';
 import History from './pages/History';
 import Rules from './pages/Rules';
 import DraftPicks from './pages/DraftPicks';
+import Playoffs from './pages/Playoffs';
 import './App.css';
 
 export default function App() {
@@ -90,6 +91,10 @@ export default function App() {
     });
   }
 
+  function savePlayoffs(playoffs) {
+    setData(prev => ({ ...prev, playoffs }));
+  }
+
   const currentWeek = data?.weeks.find(w => w.id === editingWeekId);
 
   if (!data) return (
@@ -116,6 +121,7 @@ export default function App() {
               <button className={page==='dashboard' ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('dashboard')}>Dashboard</button>
               <button className={page==='history'   ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('history')}>History</button>
               <button className={page==='picks'     ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('picks')}>Draft Picks</button>
+              <button className={page==='playoffs'  ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('playoffs')}>Playoffs</button>
               <button className={page==='rules'     ? 'nav-btn active' : 'nav-btn'} onClick={() => setPage('rules')}>Rules</button>
               <a href="https://ncaabowlpool.onrender.com/" target="_blank" rel="noopener noreferrer" className="nav-btn" style={{textDecoration:'none'}}>Bowl Pool</a>
               <a href="https://pgagolfpool.onrender.com/" target="_blank" rel="noopener noreferrer" className="nav-btn" style={{textDecoration:'none'}}>PGA Pool</a>
@@ -144,6 +150,7 @@ export default function App() {
         {page==='history' && <History weeks={data.weeks} onEditWeek={editWeek} />}
         {page==='rules' && <Rules />}
         {page==='picks' && <DraftPicks weeks={data.weeks} />}
+        {page==='playoffs' && <Playoffs weeks={data.weeks} playoffs={data.playoffs} onSave={savePlayoffs} />}
       </main>
     </div>
   );

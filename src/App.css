@@ -60,7 +60,7 @@ body {
   letter-spacing: 0.5px; border-left: 1px solid var(--navy-border);
   padding-left: 10px; margin-left: 4px;
 }
-.header-nav { display: flex; gap: 2px; }
+.header-nav { display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
 .nav-btn {
   background: transparent; color: var(--text-muted); border: none;
   padding: 6px 14px; font-size: 13px; font-weight: 500;

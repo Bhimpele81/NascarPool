@@ -131,6 +131,16 @@ export function emptyDriver() {
   return { id: generateId(), name: '', tier: '', finish: '', stageWins: '0' };
 }
 
+export function emptyPlayoffs() {
+  return { drivers: [] };
+}
+
+// Older saved data predates the playoff draft — fill in the missing slice
+// so pages can rely on it being there.
+function normalize(appData) {
+  return { playoffs: emptyPlayoffs(), ...appData };
+}
+
 export function emptyWeek() {
   return {
     id: generateId(),
@@ -170,7 +180,7 @@ export async function loadData() {
 
     if (error || !data) {
       // Nothing in DB yet — use seed data and save it
-      const seed = { weeks: SEED_WEEKS };
+      const seed = normalize({ weeks: SEED_WEEKS });
       await saveData(seed);
       localSave(seed);
       return seed;
@@ -178,10 +188,10 @@ export async function loadData() {
 
     lastKnownUpdatedAt = data.updated_at;
     localSave(data.data); // keep local in sync
-    return data.data;
+    return normalize(data.data);
   } catch (err) {
     console.warn('Supabase unavailable, using local cache:', err);
-    return localLoad() || { weeks: SEED_WEEKS };
+    return normalize(localLoad() || { weeks: SEED_WEEKS });
   }
 }
 

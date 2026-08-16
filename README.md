@@ -67,6 +67,18 @@ Earned when the same person drafts the race-winning driver in back-to-back weeks
 ### Draft Picks
 Each time a player has the race-winning driver on their roster, they earn 1 playoff draft pick. Picks determine draft order when the playoffs begin — the player with more picks gets first pick, then they alternate, with the player having more picks getting the extra consecutive picks at the end.
 
+### Playoff Draft
+The final 10 races are scored separately. Each player drafts one playoff driver for every playoff draft pick they earned during the regular season.
+
+| Item | Value |
+|------|-------|
+| Driver points | 17 minus their final chase position (12th = 5 pts, outside the top 16 = 0) |
+| Per point | $2 to the drafter who owns the driver |
+| Champion | $40 to whoever drafted the champion |
+| Most total points | $40 to the drafter with the higher point total, split on a tie |
+
+Drivers outside the playoff field may be drafted, they simply score 0.
+
 ---
 
 ## Pages
@@ -74,6 +86,7 @@ Each time a player has the race-winning driver on their roster, they earn 1 play
 - **Dashboard** — Season running total banner, all races listed most recent first (desktop table + mobile cards), click any race to open it, Export CSV button
 - **History** — Running total line chart, weekly fantasy points bar chart (Bill vs Don), full season results table (click to edit), and a sortable driver draft count table showing how often each driver was picked by Bill, Don, or both
 - **Draft Picks** — Pick tally per player, projected playoff draft order with alternating pick visualization, pick history showing which player had the race winner each week
+- **Playoffs** — Side-by-side playoff rosters for Don and Bill with a final-position column, per-driver and per-player point and dollar totals, champion and most-points bonuses, and the head-to-head settlement
 - **Rules** — Full scoring rules reference with worked examples
 
 ---
@@ -181,9 +194,11 @@ NascarPool/
 │   │   ├── RaceEntry.js     # Weekly scoring entry page
 │   │   ├── History.js       # Charts, stats, and season history
 │   │   ├── DraftPicks.js    # Playoff draft pick tracker
+│   │   ├── Playoffs.js      # Playoff rosters, scoring, and payout
 │   │   └── Rules.js         # Scoring rules reference
 │   └── utils/
 │       ├── scoring.js       # Fantasy point formulas & validation
+│       ├── playoffs.js      # Playoff points, draft order, and payout math
 │       ├── espnApi.js       # ESPN race results fetching & fuzzy matching
 │       ├── storage.js       # Supabase + localStorage persistence
 │       └── supabase.js      # Supabase client config
@@ -210,4 +225,4 @@ Interval: 5 minutes
 
 ## Coming Soon
 
-- Playoff scoring system
+- Auto-fill final chase positions from the ESPN standings API
