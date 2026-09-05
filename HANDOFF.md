@@ -65,7 +65,7 @@ Live at https://nascarpool.onrender.com. No build is failing and no data is miss
 ## Open items
 - **Auto-fill final chase positions** from the ESPN standings API (listed as Coming Soon in the
   README). Playoff positions are entered by hand today.
-- The README title still contains an em dash ("NASCAR Pool — Bill vs Don 2026"); replace it with
+- The README title still contains an em dash (between "NASCAR Pool" and "Bill vs Don 2026"); replace it with
   a colon the next time the README is edited (Bill's no-em-dash rule).
 - Season wrap-up: once the champion is crowned, confirm the Playoffs settlement matches the rules
   and consider archiving the 2026 season before 2027 setup.
