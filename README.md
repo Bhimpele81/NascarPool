@@ -1,4 +1,4 @@
-# NASCAR Pool — Bill vs Don 2026
+# NASCAR Pool: Bill vs Don 2026
 
 A web app to track a two-person weekly NASCAR fantasy contest. Built with React, backed by Supabase, deployed on Render.
 
@@ -97,7 +97,7 @@ Drivers outside the playoff field may be drafted, they simply score 0.
 1. Click **+ Add Race** on the dashboard
 2. Enter the location, date, and who has first pick
 3. Select all 12 drivers (6 per team) — rows 1–2 = Tier 1, rows 3–4 = Tier 2, rows 5–6 = Tier 3
-4. Built-in **autocomplete** suggests from a list of 41 NASCAR drivers as you type
+4. Built-in **autocomplete** suggests from a list of 42 NASCAR drivers as you type
 5. Click **Save Draft** — data is saved to Supabase, both Bill and Don can see it
 
 ### Race Day (after the race)
