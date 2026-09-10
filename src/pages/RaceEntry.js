@@ -13,7 +13,7 @@ const NASCAR_DRIVERS = [
   'Martin Truex Jr.','Shane Van Gisbergen','Bubba Wallace','Zane Smith',
   'Todd Gilliland','Kyle Busch','Chris Buescher','Ty Dillon',
   'Justin Haley','Harrison Burton','Alfredo','Connor Zilisch',
-  'Landon Cassill','Corey Heim'
+  'Landon Cassill','Corey Heim','Austin Hill'
 ].filter((v,i,a) => a.indexOf(v)===i).sort((a,b) => {
   const last = n => n.split(' ').slice(-1)[0];
   return last(a).localeCompare(last(b));
