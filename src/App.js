@@ -156,10 +156,22 @@ export default function App() {
   );
 }
 
+// Order races by race date so the race number, running totals, streak
+// bonuses, and History charts all follow the calendar rather than the order
+// the races were created in the app. Races with no date yet stay at the end.
+function sortWeeksByDate(weeks) {
+  return [...weeks].sort((a, b) => {
+    if (!a.raceDate && !b.raceDate) return 0;
+    if (!a.raceDate) return 1;
+    if (!b.raceDate) return -1;
+    return a.raceDate < b.raceDate ? -1 : a.raceDate > b.raceDate ? 1 : 0;
+  });
+}
+
 function recalcRunningTotals(weeks) {
   let running = 0;
   let billStreak = 0, donStreak = 0;
-  return weeks.map(w => {
+  return sortWeeksByDate(weeks).map(w => {
     const hasFills = w.billDrivers && w.billDrivers.some(d => d.finish);
     if (!hasFills) return { ...w, runningTotal: running };
     const billHasWinner = w.billDrivers.some(d => parseInt(d.finish,10) === 1);

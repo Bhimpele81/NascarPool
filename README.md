@@ -83,7 +83,7 @@ Drivers outside the playoff field may be drafted, they simply score 0.
 
 ## Pages
 
-- **Dashboard** — Season running total banner, all races listed most recent first (desktop table + mobile cards), click any race to open it, Export CSV button
+- **Dashboard** — Season running total banner, all races listed most recent first by race date (desktop table + mobile cards); race numbers and running totals follow race date, so a race filled in late still slots into its calendar position, click any race to open it, Export CSV button
 - **History** — Running total line chart, weekly fantasy points bar chart (Bill vs Don), full season results table (click to edit), and a sortable driver draft count table showing how often each driver was picked by Bill, Don, or both
 - **Draft Picks** — Pick tally per player, projected playoff draft order with alternating pick visualization, pick history showing which player had the race winner each week
 - **Playoffs** — Side-by-side playoff rosters for Bill and Don with a final-position column, per-driver and per-player point and dollar totals, champion and most-points bonuses, and the head-to-head settlement

@@ -38,7 +38,11 @@ Live at https://nascarpool.onrender.com. No build is failing and no data is miss
 7. **History page**: running-total line chart, weekly points bar chart (race numbers on the axis,
    track names in tooltips), season table, and a **Driver Draft Count** table (Bill / Don / Total,
    sortable by clicking headers, includes races still in draft mode).
-8. **Race list** sorted by date, most recent first.
+8. **Race list** sorted by date, most recent first. Since 2026-09-09 the race number, running
+   totals, streak bonuses, and History charts also follow race date (`sortWeeksByDate` in
+   `App.js`), not the order races were created. This surfaced when an empty race created on
+   Aug 23 was later filled in as Darlington (Sep 6) and showed as #25 with a running total
+   that jumped backwards. Races with no date yet stay at the end.
 9. **Draft eligibility rule** added to Rules and enforced: drivers at **+200 or more favorable**
    odds (for example +150, +100, -200) cannot be drafted.
 10. **Playoff draft picks**: one pick per race win on your roster, **max 16 picks awarded**.
