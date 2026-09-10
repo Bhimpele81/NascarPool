@@ -128,7 +128,7 @@ export async function fetchRaceResults(raceDateStr, draftNames) {
       if (score > bestScore) { bestScore = score; bestDriver = d; }
     }
     if (bestDriver && bestScore >= 60) {
-      result[draftName] = { finish: bestDriver.finish, stageWins: 0 };
+      result[draftName] = { finish: bestDriver.finish, stageWins: 0, espnName: bestDriver.name };
     }
   }
   return result;

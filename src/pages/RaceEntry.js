@@ -1,28 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { calcDriverPoints, calcWeeklyMoney, validateTeam } from '../utils/scoring';
 import { fetchRaceResults } from '../utils/espnApi';
+import { buildDriverList } from '../utils/drivers';
 
-const NASCAR_DRIVERS = [
-  'A.J. Allmendinger','Aric Almirola','Alex Bowman','Ryan Blaney',
-  'Christopher Bell','Chad Briscoe','Josh Berry','William Byron',
-  'Ross Chastain','Austin Cindric','Cole Custer','Austin Dillon',
-  'Chase Elliott','Ty Gibbs','Noah Gragson','Denny Hamlin',
-  'Carson Hocevar','Erik Jones','Brad Keselowski','Kyle Larson',
-  'Corey LaJoie','Joey Logano','Michael McDowell','John Hunter Nemechek',
-  'Ryan Preece','Tyler Reddick','Ricky Stenhouse Jr.','Daniel Suarez',
-  'Martin Truex Jr.','Shane Van Gisbergen','Bubba Wallace','Zane Smith',
-  'Todd Gilliland','Kyle Busch','Chris Buescher','Ty Dillon',
-  'Justin Haley','Harrison Burton','Alfredo','Connor Zilisch',
-  'Landon Cassill','Corey Heim','Austin Hill'
-].filter((v,i,a) => a.indexOf(v)===i).sort((a,b) => {
-  const last = n => n.split(' ').slice(-1)[0];
-  return last(a).localeCompare(last(b));
-});
 
 function tierForIndex(i) { return i < 2 ? '1' : i < 4 ? '2' : '3'; }
 function tierLabel(i) { return i < 2 ? 'T1 (1–12)' : i < 4 ? 'T2 (13–25)' : 'T3 (26+)'; }
 
-export default function RaceEntry({ week, onSave, onBack, saveStatus }) {
+export default function RaceEntry({ week, onSave, onBack, saveStatus, knownDrivers = [], onDriversLearned }) {
+  const driverList = buildDriverList(knownDrivers);
   const [form, setForm] = useState(() => {
     const fixTiers = (drivers) => drivers.map((d, i) => ({ ...d, tier: tierForIndex(i) }));
     return { ...week, billDrivers: fixTiers(week.billDrivers), donDrivers: fixTiers(week.donDrivers) };
@@ -88,6 +74,11 @@ export default function RaceEntry({ week, onSave, onBack, saveStatus }) {
 
       const resultsMap = await fetchRaceResults(form.raceDate, allNames);
       const matched = Object.keys(resultsMap).length;
+
+      // Teach the autocomplete every driver ESPN recognized, under ESPN's spelling.
+      if (matched > 0 && onDriversLearned) {
+        onDriversLearned(Object.values(resultsMap).map(r => r.espnName).filter(Boolean));
+      }
 
       if (matched === 0) {
         setAutoStatus('error');
@@ -321,7 +312,7 @@ function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
                         style={{ fontSize: 12, padding: '4px 6px', width: '100%' }}
                       />
                       <datalist id={`drivers-${team}-${i}`}>
-                        {NASCAR_DRIVERS.map(n => <option key={n} value={n} />)}
+                        {driverList.map(n => <option key={n} value={n} />)}
                       </datalist>
                     </>
                   )}

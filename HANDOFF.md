@@ -43,20 +43,24 @@ Live at https://nascarpool.onrender.com. No build is failing and no data is miss
    `App.js`), not the order races were created. This surfaced when an empty race created on
    Aug 23 was later filled in as Darlington (Sep 6) and showed as #25 with a running total
    that jumped backwards. Races with no date yet stay at the end.
-9. **Draft eligibility rule** added to Rules and enforced: drivers at **+200 or more favorable**
+9. **Self-maintaining autocomplete** (2026-09-09): the static driver list moved to
+   `utils/drivers.js`. After a successful Auto Update, ESPN's spelling of every matched driver
+   is stored in `appData.knownDrivers` (Supabase) and merged into the suggestions. Names ESPN
+   never matched are not learned, so typos do not accumulate.
+10. **Draft eligibility rule** added to Rules and enforced: drivers at **+200 or more favorable**
    odds (for example +150, +100, -200) cannot be drafted.
-10. **Playoff draft picks**: one pick per race win on your roster, **max 16 picks awarded**.
+11. **Playoff draft picks**: one pick per race win on your roster, **max 16 picks awarded**.
     Draft order alternates starting with the player holding more picks, who also gets the extra
     picks at the end.
-11. **Playoffs tab** for the final 10 races: each player drafts one playoff driver per pick earned.
+12. **Playoffs tab** for the final 10 races: each player drafts one playoff driver per pick earned.
     Driver points = 17 minus final chase position (outside top 16 = 0), $2 per point to the
     drafter, $40 champion bonus, $40 most-points bonus (split on tie), head-to-head settlement.
     Bill is listed first to match the race pages. A message like "Bill earned 9 picks but has 8
     drivers drafted" means picks earned exceed playoff drivers entered; it is informational.
-12. **Mobile**: plain-text last names (tap to edit), T10 and Stage columns hidden, shorter tier
+13. **Mobile**: plain-text last names (tap to edit), T10 and Stage columns hidden, shorter tier
     labels, 768px breakpoint, card layout on the dashboard. An earlier complaint that drafters
     were not visible on mobile drove this work.
-13. **Favicons / manifest** for Safari bookmarks; navbar links to the PGA and Bowl pool apps;
+14. **Favicons / manifest** for Safari bookmarks; navbar links to the PGA and Bowl pool apps;
     README rewritten to cover everything.
 
 ## Operations

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { loadData, saveData, emptyWeek } from './utils/storage';
+import { newDriverNames } from './utils/drivers';
 import { calcWeeklyMoney } from './utils/scoring';
 import Dashboard from './pages/Dashboard';
 import RaceEntry from './pages/RaceEntry';
@@ -91,6 +92,18 @@ export default function App() {
     });
   }
 
+  // Called after a successful ESPN Auto Update with the names ESPN returned.
+  // Only names not already in the autocomplete are stored, so the list grows
+  // by itself as new drivers race.
+  function learnDrivers(espnNames) {
+    setData(prev => {
+      const known = prev.knownDrivers || [];
+      const fresh = newDriverNames(espnNames, known);
+      if (fresh.length === 0) return prev;
+      return { ...prev, knownDrivers: [...known, ...fresh] };
+    });
+  }
+
   function savePlayoffs(playoffs) {
     setData(prev => ({ ...prev, playoffs }));
   }
@@ -146,7 +159,7 @@ export default function App() {
           </div>
         )}
         {page==='dashboard' && <Dashboard weeks={data.weeks} onAddWeek={addWeek} onEditWeek={editWeek} onDeleteWeek={deleteWeek} />}
-        {page==='entry' && currentWeek && <RaceEntry week={currentWeek} onSave={saveWeek} onBack={() => setPage('dashboard')} saveStatus={saveStatus} />}
+        {page==='entry' && currentWeek && <RaceEntry week={currentWeek} onSave={saveWeek} onBack={() => setPage('dashboard')} saveStatus={saveStatus} knownDrivers={data.knownDrivers || []} onDriversLearned={learnDrivers} />}
         {page==='history' && <History weeks={data.weeks} onEditWeek={editWeek} />}
         {page==='rules' && <Rules />}
         {page==='picks' && <DraftPicks weeks={data.weeks} />}

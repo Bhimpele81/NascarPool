@@ -97,7 +97,7 @@ Drivers outside the playoff field may be drafted, they simply score 0.
 1. Click **+ Add Race** on the dashboard
 2. Enter the location, date, and who has first pick
 3. Select all 12 drivers (6 per team) — rows 1–2 = Tier 1, rows 3–4 = Tier 2, rows 5–6 = Tier 3
-4. Built-in **autocomplete** suggests from a list of 43 NASCAR drivers as you type
+4. Built-in **autocomplete** suggests from a list of 43 NASCAR drivers as you type. The list maintains itself: any driver that ESPN Auto Update successfully matches is added under ESPN's spelling, so new drivers only need to be typed once
 5. Click **Save Draft** — data is saved to Supabase, both Bill and Don can see it
 
 ### Race Day (after the race)
