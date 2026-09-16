@@ -46,7 +46,11 @@ Live at https://nascarpool.onrender.com. No build is failing and no data is miss
 9. **Self-maintaining autocomplete** (2026-09-09): the static driver list moved to
    `utils/drivers.js`. After a successful Auto Update, ESPN's spelling of every matched driver
    is stored in `appData.knownDrivers` (Supabase) and merged into the suggestions. Names ESPN
-   never matched are not learned, so typos do not accumulate.
+   never matched are not learned, so typos do not accumulate. Incident 2026-09-16: the first
+   version computed the list in `RaceEntry` but the `<datalist>` lives in the sibling
+   `DriverTable` component, so opening any race threw `driverList is not defined` and blanked
+   the page for a week. `npm run build` did not catch it. Now passed as a prop. When testing
+   entry-page changes, open a race in the built app, not just the dashboard.
 10. **Draft eligibility rule** added to Rules and enforced: drivers at **+200 or more favorable**
    odds (for example +150, +100, -200) cannot be drafted.
 11. **Playoff draft picks**: one pick per race win on your roster, **max 16 picks awarded**.
