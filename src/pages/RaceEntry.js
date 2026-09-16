@@ -210,9 +210,9 @@ export default function RaceEntry({ week, onSave, onBack, saveStatus, knownDrive
       )}
 
       <div className="driver-tables-grid">
-        <DriverTable label="Bill's Drivers" team="billDrivers" headerClass="bill-header"
+        <DriverTable label="Bill's Drivers" team="billDrivers" headerClass="bill-header" driverList={driverList}
           drivers={form.billDrivers} onUpdate={(i,f2,v) => updateDriver('billDrivers',i,f2,v)} />
-        <DriverTable label="Don's Drivers" team="donDrivers" headerClass="don-header"
+        <DriverTable label="Don's Drivers" team="donDrivers" headerClass="don-header" driverList={driverList}
           drivers={form.donDrivers} onUpdate={(i,f2,v) => updateDriver('donDrivers',i,f2,v)} />
       </div>
 
@@ -261,7 +261,7 @@ function lastNameOf(fullName) {
   return parts.length > 1 ? parts.slice(-1)[0] : fullName;
 }
 
-function DriverTable({ label, team, headerClass, drivers, onUpdate }) {
+function DriverTable({ label, team, headerClass, drivers, onUpdate, driverList }) {
   const isMobile = useIsMobile();
   const teamTotal = drivers.reduce((s, d) => s + calcDriverPoints(d.finish, d.tier, d.stageWins).total, 0);
   return (
