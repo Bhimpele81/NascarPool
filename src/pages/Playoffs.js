@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { generateId } from '../utils/storage';
+import { fetchPlayoffStandings, matchStandings, AUTO_UPDATE_PASSCODE } from '../utils/espnApi';
 import {
   countDraftPicks, calcPlayoffResult, validatePlayoffs, driverPoints,
   PLAYOFF_RACES, PLAYOFF_FIELD, POINTS_BASE,
@@ -12,6 +13,8 @@ export default function Playoffs({ weeks, playoffs, onSave }) {
   const picks = useMemo(() => countDraftPicks(weeks), [weeks]);
 
   const drivers  = playoffs?.drivers || [];
+  const [pullStatus, setPullStatus]   = useState(null); // null | 'loading' | 'success' | 'warning' | 'error'
+  const [pullMessage, setPullMessage] = useState('');
   const result   = useMemo(() => calcPlayoffResult(drivers), [drivers]);
   const warnings = useMemo(() => validatePlayoffs(drivers, picks), [drivers, picks]);
 
@@ -51,6 +54,58 @@ export default function Playoffs({ weeks, playoffs, onSave }) {
     update(drivers.filter(d => d.id !== id));
   }
 
+  // Fill every drafted driver's position from ESPN's live championship
+  // standings. With no elimination rounds, rank is the live order, so this
+  // is an "if the playoffs ended today" snapshot. Positions stay editable.
+  async function handlePullStandings() {
+    const code = window.prompt('Enter passcode to pull current standings:');
+    if (code === null) return;
+    if (code !== AUTO_UPDATE_PASSCODE) {
+      setPullStatus('error');
+      setPullMessage('Incorrect passcode. Standings not updated.');
+      return;
+    }
+    const names = drivers.map(d => d.name?.trim()).filter(Boolean);
+    if (names.length === 0) {
+      setPullStatus('error');
+      setPullMessage('No playoff drivers entered yet. Add driver names first.');
+      return;
+    }
+    setPullStatus('loading');
+    setPullMessage('');
+    try {
+      const seasonYear = weeks.map(w => parseInt((w.raceDate || '').slice(0, 4), 10)).filter(Boolean).sort().pop();
+      const standings = await fetchPlayoffStandings(seasonYear);
+      const matches = matchStandings(names, standings);
+      const matched = Object.keys(matches).length;
+      if (matched === 0) {
+        setPullStatus('error');
+        setPullMessage('No playoff drivers could be matched to ESPN standings. Check the names.');
+        return;
+      }
+      const nextDrivers = drivers.map(d => {
+        const m = matches[d.name?.trim()];
+        return m ? { ...d, position: String(m.rank) } : d;
+      });
+      onSave({ ...(playoffs || {}), drivers: nextDrivers, standingsAsOf: new Date().toISOString() });
+      const unmatched = names.filter(n => !matches[n]);
+      setPullStatus(unmatched.length > 0 ? 'warning' : 'success');
+      setPullMessage(
+        `✓ Updated ${matched} of ${names.length} drivers from ESPN standings.${
+          unmatched.length > 0 ? ` Not found: ${unmatched.join(', ')}. Enter those positions by hand.` : ''
+        }`
+      );
+    } catch (err) {
+      setPullStatus('error');
+      setPullMessage(`ESPN fetch failed: ${err.message}`);
+    }
+  }
+
+  const asOf = playoffs?.standingsAsOf ? new Date(playoffs.standingsAsOf) : null;
+  const asOfLabel = asOf && !isNaN(asOf)
+    ? asOf.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+    : null;
+
   const billWinning = result.net > 0;
   const donWinning  = result.net < 0;
 
@@ -76,8 +131,8 @@ export default function Playoffs({ weeks, playoffs, onSave }) {
           </div>
           <div className="winner-sub">
             {result.scored
-              ? `Bill ${money(result.billGross)} · Don ${money(result.donGross)}`
-              : `Enter final chase positions below to score the last ${PLAYOFF_RACES} races`}
+              ? `Bill ${money(result.billGross)} · Don ${money(result.donGross)}${asOfLabel ? ` · if the playoffs ended today (ESPN standings as of ${asOfLabel})` : ''}`
+              : `Enter chase positions below, or pull the current standings from ESPN, to score the last ${PLAYOFF_RACES} races`}
           </div>
         </div>
         <div className="winner-amount" style={{ color: result.net === 0 ? 'var(--text-muted)' : 'var(--green)' }}>
@@ -112,10 +167,25 @@ export default function Playoffs({ weeks, playoffs, onSave }) {
           </div>
         </div>
       ) : (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
+            <button className="btn btn-primary" onClick={handlePullStandings} disabled={pullStatus === 'loading'}>
+              {pullStatus === 'loading' ? 'Pulling standings...' : '⚡ Pull Current Standings'}
+            </button>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              Fills each driver's position from ESPN's live championship standings. Positions stay editable.
+            </span>
+          </div>
+          {pullMessage && (
+            <div className={`alert ${pullStatus === 'error' ? 'alert-error' : pullStatus === 'warning' ? 'alert-warning' : 'alert-success'}`}>
+              {pullMessage}
+            </div>
+          )}
         <div className="driver-tables-grid">
           <Roster owner="Bill" rows={result.billRows} earned={picks.bill} {...rosterProps} />
           <Roster owner="Don"  rows={result.donRows}  earned={picks.don}  {...rosterProps} />
         </div>
+        </>
       )}
 
       <datalist id="playoff-driver-names">
@@ -169,6 +239,7 @@ export default function Playoffs({ weeks, playoffs, onSave }) {
         <div className="card-body" style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.7 }}>
           <div>· The playoff draft covers the final {PLAYOFF_RACES} races of the season.</div>
           <div>· You draft one playoff driver for every race winner you drafted in the regular season.</div>
+          <div>· All {PLAYOFF_FIELD} Chase drivers run to the finale; there are no elimination rounds and the points leader is champion.</div>
           <div>· A driver scores {POINTS_BASE} minus their final chase position, so 12th place earns 5 points. Outside the top {PLAYOFF_FIELD} scores 0.</div>
           <div>· Every point is worth {money(DOLLARS_PER_POINT)} to the drafter who owns it.</div>
           <div>· {money(CHAMPION_BONUS)} to whoever drafted the champion.</div>

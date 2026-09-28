@@ -5,7 +5,7 @@
 
 export const NASCAR_DRIVERS = [
   'A.J. Allmendinger','Aric Almirola','Alex Bowman','Ryan Blaney',
-  'Christopher Bell','Chad Briscoe','Josh Berry','William Byron',
+  'Christopher Bell','Chase Briscoe','Josh Berry','William Byron',
   'Ross Chastain','Austin Cindric','Cole Custer','Austin Dillon',
   'Chase Elliott','Ty Gibbs','Noah Gragson','Denny Hamlin',
   'Carson Hocevar','Erik Jones','Brad Keselowski','Kyle Larson',

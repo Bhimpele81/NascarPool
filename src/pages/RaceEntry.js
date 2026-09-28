@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { calcDriverPoints, calcWeeklyMoney, validateTeam } from '../utils/scoring';
-import { fetchRaceResults } from '../utils/espnApi';
+import { fetchRaceResults, AUTO_UPDATE_PASSCODE } from '../utils/espnApi';
 import { buildDriverList } from '../utils/drivers';
 
 
@@ -52,7 +52,7 @@ export default function RaceEntry({ week, onSave, onBack, saveStatus, knownDrive
   async function handleAutoUpdate() {
     const code = window.prompt('Enter passcode to auto-update results:');
     if (code === null) return; // cancelled
-    if (code !== '1716') {
+    if (code !== AUTO_UPDATE_PASSCODE) {
       setAutoStatus('error');
       setAutoMessage('Incorrect passcode. Results not updated.');
       return;

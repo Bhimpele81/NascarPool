@@ -4,6 +4,10 @@
 // Stage wins are not exposed by this endpoint — enter those manually.
 
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports/racing/nascar-premier';
+const ESPN_STANDINGS = 'https://site.web.api.espn.com/apis/v2/sports/racing/nascar-premier/standings';
+
+// Passcode required before anything is pulled from ESPN (see HANDOFF: spoiler incident).
+export const AUTO_UPDATE_PASSCODE = '1716';
 
 function normalizeName(name) {
   return (name || '')
@@ -130,6 +134,61 @@ export async function fetchRaceResults(raceDateStr, draftNames) {
     if (bestDriver && bestScore >= 60) {
       result[draftName] = { finish: bestDriver.finish, stageWins: 0, espnName: bestDriver.name };
     }
+  }
+  return result;
+}
+
+/**
+ * Current Cup Series championship standings from ESPN.
+ * Returns [{ name, rank, points }] sorted by rank. With the 2026 format there
+ * are no elimination rounds, so rank is the live championship order and the
+ * Playoffs tab can use it as an "if the playoffs ended today" snapshot.
+ */
+export async function fetchPlayoffStandings(seasonYear) {
+  const year = seasonYear || new Date().getFullYear();
+  let data;
+  try {
+    data = await getJSON(`${ESPN_STANDINGS}?season=${year}`);
+  } catch (err) {
+    throw new Error(err.message || 'Could not reach ESPN. Try again in a few minutes.');
+  }
+  const groups = data?.children || [];
+  const entries = groups.flatMap(g => g?.standings?.entries || []);
+  const standings = entries
+    .map(e => {
+      const stats = e.stats || [];
+      const rank = stats.find(s => s.name === 'rank' || s.type === 'rank');
+      const pts  = stats.find(s => s.name === 'championshipPts' || s.type === 'points');
+      return {
+        name: e.athlete?.displayName || e.athlete?.name || '',
+        rank: parseInt(rank?.value ?? rank?.displayValue, 10),
+        points: parseInt(pts?.value ?? pts?.displayValue, 10) || 0,
+      };
+    })
+    .filter(d => d.name && d.rank >= 1)
+    .sort((a, b) => a.rank - b.rank);
+
+  if (standings.length === 0) {
+    throw new Error(`ESPN returned no standings for ${year}.`);
+  }
+  console.info(`[fetchPlayoffStandings] season=${year}, drivers: ${standings.length}`);
+  return standings;
+}
+
+/**
+ * Match drafted playoff names to standings rows using the same fuzzy
+ * matcher as race results. Returns { [draftName]: { rank, espnName } }.
+ */
+export function matchStandings(draftNames, standings) {
+  const result = {};
+  for (const draftName of draftNames) {
+    if (!draftName) continue;
+    let bestScore = 0, best = null;
+    for (const d of standings) {
+      const score = matchScore(d.name, draftName);
+      if (score > bestScore) { bestScore = score; best = d; }
+    }
+    if (best && bestScore >= 60) result[draftName] = { rank: best.rank, espnName: best.name };
   }
   return result;
 }

@@ -59,7 +59,12 @@ Live at https://nascarpool.onrender.com. No build is failing and no data is miss
 12. **Playoffs tab** for the final 10 races: each player drafts one playoff driver per pick earned.
     Driver points = 17 minus final chase position (outside top 16 = 0), $2 per point to the
     drafter, $40 champion bonus, $40 most-points bonus (split on tie), head-to-head settlement.
-    Bill is listed first to match the race pages. A message like "Bill earned 9 picks but has 8
+    Bill is listed first to match the race pages. 2026 format: all 16 Chase drivers run to the
+    finale, no elimination rounds, points leader is champion. **Pull Current Standings**
+    (2026-09-28) fills positions from ESPN's standings feed
+    (`site.web.api.espn.com/apis/v2/sports/racing/nascar-premier/standings?season=YYYY`, CORS
+    open, `rank` + `championshipPts` per athlete) via the same fuzzy matcher and passcode as Auto
+    Update, and stores `playoffs.standingsAsOf`. Positions remain editable. A message like "Bill earned 9 picks but has 8
     drivers drafted" means picks earned exceed playoff drivers entered; it is informational.
 13. **Mobile**: plain-text last names (tap to edit), T10 and Stage columns hidden, shorter tier
     labels, 768px breakpoint, card layout on the dashboard. An earlier complaint that drafters
