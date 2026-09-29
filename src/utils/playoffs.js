@@ -149,10 +149,8 @@ export function validatePlayoffs(drivers = [], picks = { bill: 0, don: 0 }) {
   const dupPos = positions.find((p, i) => positions.indexOf(p) !== i);
   if (dupPos) warnings.push(`Two drivers are both set to position ${dupPos}.`);
 
-  const billCount = drivers.filter(d => d.owner === 'Bill').length;
-  const donCount  = drivers.filter(d => d.owner === 'Don').length;
-  if (billCount !== picks.bill) warnings.push(`Bill earned ${picks.bill} picks but has ${billCount} drivers drafted.`);
-  if (donCount !== picks.don)   warnings.push(`Don earned ${picks.don} picks but has ${donCount} drivers drafted.`);
+  // The draft is closed, so picks earned vs drivers drafted is no longer
+  // warned about (Bill left one of his 11 picks unused in 2026).
 
   // Only nag about empty slots once the draft is actually under way.
   const unnamed = drivers.length - named.length;

@@ -64,7 +64,12 @@ Live at https://nascarpool.onrender.com. No build is failing and no data is miss
     (2026-09-28) fills positions from ESPN's standings feed
     (`site.web.api.espn.com/apis/v2/sports/racing/nascar-premier/standings?season=YYYY`, CORS
     open, `rank` + `championshipPts` per athlete) via the same fuzzy matcher and passcode as Auto
-    Update, and stores `playoffs.standingsAsOf`. Positions remain editable. A message like "Bill earned 9 picks but has 8
+    Update, and stores `playoffs.standingsAsOf`. Positions remain editable. Incident the same
+    night: closing the passcode `window.prompt` fires a window `focus` event, which triggered
+    the reload-from-cloud in `App.js` and overwrote the freshly pulled positions with the old
+    blank ones (then saved the blanks). The reload now skips the playoffs page too, and skips
+    whenever a save is pending. The "earned N picks but drafted M" warning was removed once
+    the draft closed. A message like "Bill earned 9 picks but has 8
     drivers drafted" means picks earned exceed playoff drivers entered; it is informational.
 13. **Mobile**: plain-text last names (tap to edit), T10 and Stage columns hidden, shorter tier
     labels, 768px breakpoint, card layout on the dashboard. An earlier complaint that drafters

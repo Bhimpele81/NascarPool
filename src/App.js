@@ -20,6 +20,8 @@ export default function App() {
   const saveTimer = useRef(null);
   const pageRef = useRef(page);
   pageRef.current = page;
+  const saveStatusRef = useRef(saveStatus);
+  saveStatusRef.current = saveStatus;
 
   function reloadFromCloud() {
     return loadData().then(d => {
@@ -54,11 +56,15 @@ export default function App() {
   }, [data]);
 
   // When returning to this tab/device, pull the latest from the cloud — but
-  // never while editing, so we don't wipe in-progress entry on this device.
+  // never while editing (race entry or playoffs), and never while a local
+  // change is still being saved, so we don't wipe it with older cloud data.
+  // Note: closing a window.prompt (the ESPN passcode) fires a focus event,
+  // which is how Pull Current Standings once had its result overwritten.
   useEffect(() => {
     function onFocus() {
       if (document.visibilityState === 'hidden') return;
-      if (pageRef.current === 'entry') return;
+      if (pageRef.current === 'entry' || pageRef.current === 'playoffs') return;
+      if (saveStatusRef.current === 'saving') return;
       reloadFromCloud();
     }
     window.addEventListener('focus', onFocus);
