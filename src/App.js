@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { loadData, saveData, emptyWeek } from './utils/storage';
 import { newDriverNames } from './utils/drivers';
+import { archiveSeasonData, DEFAULT_SEASON } from './utils/seasons';
 import { calcWeeklyMoney } from './utils/scoring';
 import Dashboard from './pages/Dashboard';
 import RaceEntry from './pages/RaceEntry';
@@ -114,6 +115,13 @@ export default function App() {
     setData(prev => ({ ...prev, playoffs }));
   }
 
+  // Freeze the current season into data.seasons and start the next year with
+  // an empty dashboard. The History tab shows archived seasons.
+  function archiveSeason() {
+    setData(prev => archiveSeasonData(prev));
+    setPage('history');
+  }
+
   const currentWeek = data?.weeks.find(w => w.id === editingWeekId);
 
   if (!data) return (
@@ -130,7 +138,7 @@ export default function App() {
          <div className="header-brand" onClick={() => setPage('dashboard')} style={{ cursor: 'pointer' }}>
   <img src="/logo.webp" alt="NASCAR" style={{ height: 36, objectFit: 'contain' }} />
   <span className="brand-title">NASCAR Pool</span>
-  <span className="brand-sub">Bill vs Don · 2026</span>
+  <span className="brand-sub">Bill vs Don · {data.season || DEFAULT_SEASON}</span>
 </div>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             {saveStatus === 'saving' && <span style={{ fontSize:11, color:'var(--text-muted)' }}>Saving...</span>}
@@ -164,9 +172,9 @@ export default function App() {
             </button>
           </div>
         )}
-        {page==='dashboard' && <Dashboard weeks={data.weeks} onAddWeek={addWeek} onEditWeek={editWeek} onDeleteWeek={deleteWeek} />}
+        {page==='dashboard' && <Dashboard weeks={data.weeks} season={data.season || DEFAULT_SEASON} onAddWeek={addWeek} onEditWeek={editWeek} onDeleteWeek={deleteWeek} />}
         {page==='entry' && currentWeek && <RaceEntry week={currentWeek} onSave={saveWeek} onBack={() => setPage('dashboard')} saveStatus={saveStatus} knownDrivers={data.knownDrivers || []} onDriversLearned={learnDrivers} />}
-        {page==='history' && <History weeks={data.weeks} onEditWeek={editWeek} />}
+        {page==='history' && <History weeks={data.weeks} playoffs={data.playoffs} season={data.season || DEFAULT_SEASON} seasons={data.seasons || {}} onEditWeek={editWeek} onArchiveSeason={archiveSeason} />}
         {page==='rules' && <Rules />}
         {page==='picks' && <DraftPicks weeks={data.weeks} />}
         {page==='playoffs' && <Playoffs weeks={data.weeks} playoffs={data.playoffs} onSave={savePlayoffs} />}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { exportToCSV } from '../utils/scoring';
 
-export default function Dashboard({ weeks, onAddWeek, onEditWeek, onDeleteWeek }) {
+export default function Dashboard({ weeks, season, onAddWeek, onEditWeek, onDeleteWeek }) {
   const completed = weeks.filter(w => w.completed && w.result);
   const runningTotal = weeks.length > 0 ? (weeks[weeks.length - 1].runningTotal || 0) : 0;
   const leaderName = runningTotal > 0 ? 'Bill' : runningTotal < 0 ? 'Don' : null;
@@ -25,7 +25,7 @@ export default function Dashboard({ weeks, onAddWeek, onEditWeek, onDeleteWeek }
       }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: 6 }}>
-            2026 Season — Running Total
+            {season} Season — Running Total
           </div>
           {leaderName ? (
             <div style={{ fontSize: 36, fontWeight: 800, color: leaderName === 'Bill' ? 'var(--blue-light)' : 'var(--red)', lineHeight: 1 }}>

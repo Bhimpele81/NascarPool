@@ -135,10 +135,10 @@ export function emptyPlayoffs() {
   return { drivers: [] };
 }
 
-// Older saved data predates the playoff draft and the learned-driver list;
-// fill in the missing slices so pages can rely on them being there.
+// Older saved data predates the playoff draft, the learned-driver list, and
+// the season archive; fill in the missing slices so pages can rely on them.
 function normalize(appData) {
-  return { playoffs: emptyPlayoffs(), knownDrivers: [], ...appData };
+  return { playoffs: emptyPlayoffs(), knownDrivers: [], season: 2026, seasons: {}, ...appData };
 }
 
 export function emptyWeek() {

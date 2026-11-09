@@ -1,8 +1,128 @@
 import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { exportToCSV } from '../utils/scoring';
+import { seasonHighlights, listSeasons } from '../utils/seasons';
+import { AUTO_UPDATE_PASSCODE } from '../utils/espnApi';
 
-export default function History({ weeks, onEditWeek }) {
+const money = n => `$${Math.abs(n).toLocaleString()}`;
+
+export default function History({ weeks, playoffs, season, seasons, onEditWeek, onArchiveSeason }) {
+  const past = listSeasons({ seasons });
+  const [selectedYear, setSelectedYear] = useState(past[0]?.year || null);
+  const selected = past.find(p => p.year === selectedYear) || past[0] || null;
+  const liveCompleted = weeks.filter(w => w.completed && w.result).length;
+
+  function handleArchive() {
+    const code = window.prompt(`Enter passcode to archive the ${season} season:`);
+    if (code === null) return;
+    if (code !== AUTO_UPDATE_PASSCODE) { window.alert('Incorrect passcode. Nothing was changed.'); return; }
+    const ok = window.confirm(
+      `Archive the ${season} season?\n\nAll ${weeks.length} races and the playoff board move to Past Seasons on this tab, `
+      + `and the Dashboard starts ${season + 1} empty. Nothing is deleted.`
+    );
+    if (ok) onArchiveSeason();
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text-muted)' }}>
+          {season} Season
+        </div>
+        {liveCompleted > 0 && (
+          <button className="btn btn-secondary btn-sm" onClick={handleArchive} title={`Move ${season} to Past Seasons and start ${season + 1}`}>
+            Archive {season} season, start {season + 1}
+          </button>
+        )}
+      </div>
+
+      <SeasonView weeks={weeks} onEditWeek={onEditWeek} />
+
+      {past.length > 0 && (
+        <div style={{ marginTop: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text-muted)' }}>
+              Past Seasons
+            </div>
+            {past.map(p => (
+              <button key={p.year}
+                className={p.year === selected?.year ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}
+                onClick={() => setSelectedYear(p.year)}>
+                {p.year}
+              </button>
+            ))}
+          </div>
+          {selected && (
+            <>
+              <SeasonRecap season={selected} />
+              <SeasonView weeks={selected.weeks} readOnly />
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Season recap: the headline numbers for a finished season ──
+function SeasonRecap({ season }) {
+  const h = seasonHighlights(season.weeks, season.playoffs);
+  const p = h.playoff;
+  const leader = n => (n > 0 ? 'Bill' : n < 0 ? 'Don' : null);
+  const leaderColor = n => (n > 0 ? 'var(--blue-light)' : n < 0 ? 'var(--red)' : 'var(--text-muted)');
+  const combinedLeader = leader(h.combinedNet);
+
+  return (
+    <div>
+      <div className="card" style={{ padding: '18px 20px', marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text-muted)', marginBottom: 6 }}>
+          {season.year} Final
+        </div>
+        <div style={{ fontSize: 32, fontWeight: 800, lineHeight: 1.1, color: leaderColor(h.combinedNet) }}>
+          {combinedLeader ? <>{combinedLeader} won {season.year} by <span style={{ color: 'var(--green)' }}>{money(h.combinedNet)}</span></> : 'All square'}
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 8, display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+          <span>Regular season: <b style={{ color: leaderColor(h.seasonNet) }}>{leader(h.seasonNet) ? `${leader(h.seasonNet)} +${money(h.seasonNet)}` : 'Even'}</b> over {h.races} races</span>
+          <span>Playoffs: <b style={{ color: leaderColor(h.playoffNet) }}>{p.scored ? (leader(h.playoffNet) ? `${leader(h.playoffNet)} +${money(h.playoffNet)}` : 'Even') : 'not scored'}</b>{p.scored ? ` (Bill ${money(p.billGross)} · Don ${money(p.donGross)})` : ''}</span>
+          {p.champion?.name && <span>Champion: <b style={{ color: p.championOwner === 'Bill' ? 'var(--blue-light)' : 'var(--red)' }}>{p.champion.name}</b> ({p.championOwner})</span>}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 16 }}>
+        <Stat label="Weeks won" bill={h.billWins} don={h.donWins} sub={h.ties > 0 ? `${h.ties} tie${h.ties > 1 ? 's' : ''}` : null} />
+        <Stat label="Longest win streak" bill={h.billLongest} don={h.donLongest} suffix=" wks" />
+        <Stat label="Fantasy points" bill={h.billPts.toLocaleString()} don={h.donPts.toLocaleString()} mid />
+        <Stat label="Race winners drafted" bill={h.billPicks} don={h.donPicks} sub="playoff picks earned" />
+        <Stat label="Biggest week" bill={h.billBest ? `+${money(h.billBest.amount)}` : '—'} don={h.donBest ? `+${money(h.donBest.amount)}` : '—'}
+          sub={[h.billBest && `Bill: ${h.billBest.track}`, h.donBest && `Don: ${h.donBest.track}`].filter(Boolean).join(' · ')} />
+        <Stat label="Biggest lead" bill={h.billLead ? `+${money(h.billLead.amount)}` : '—'} don={h.donLead ? `+${money(h.donLead.amount)}` : '—'}
+          sub={[h.billLead && `Bill after ${h.billLead.track}`, h.donLead && `Don after ${h.donLead.track}`].filter(Boolean).join(' · ')} />
+        {p.scored && <Stat label="Playoff points" bill={p.billPts} don={p.donPts} sub={`Bill ${money(p.billGross)} · Don ${money(p.donGross)}`} />}
+        <Stat label="Most drafted"
+          bill={h.billTopDrivers[0] ? `${h.billTopDrivers[0].name} (${h.billTopDrivers[0].count})` : '—'}
+          don={h.donTopDrivers[0] ? `${h.donTopDrivers[0].name} (${h.donTopDrivers[0].count})` : '—'} small />
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, bill, don, sub, suffix = '', small, mid }) {
+  const size = small ? 14 : mid ? 18 : 24;
+  return (
+    <div className="card" style={{ padding: '14px 16px' }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', marginBottom: 8 }}>{label}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
+        <span style={{ fontSize: size, fontWeight: 800, color: 'var(--blue-light)' }}>{bill}{suffix}</span>
+        <span style={{ fontSize: size, fontWeight: 800, color: 'var(--red)' }}>{don}{suffix}</span>
+      </div>
+      {sub && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>{sub}</div>}
+    </div>
+  );
+}
+
+// ── One season's charts, results table, and driver draft count ──
+// Used for the live season (rows open the race) and for archived seasons (read only).
+function SeasonView({ weeks, onEditWeek, readOnly = false }) {
   const completed = weeks.filter(w => w.completed && w.result);
 
   const chartData = completed.map((w, i) => ({
@@ -20,6 +140,8 @@ export default function History({ weeks, onEditWeek }) {
       ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>+${n}</span>
       : <span style={{ color: 'var(--red)', fontWeight: 600 }}>-${Math.abs(n)}</span>;
   }
+
+  const [driverSort, setDriverSort] = useState({ col: 'total', dir: 'desc' });
 
   if (completed.length === 0) {
     return (
@@ -45,8 +167,6 @@ export default function History({ weeks, onEditWeek }) {
       driverCounts[d.name].don++;
     });
   });
-  const [driverSort, setDriverSort] = useState({ col: 'total', dir: 'desc' });
-
   const driverList = Object.entries(driverCounts)
     .map(([name, c]) => ({ name, bill: c.bill, don: c.don, total: c.bill + c.don }))
     .sort((a, b) => {
@@ -143,7 +263,7 @@ export default function History({ weeks, onEditWeek }) {
               {completed.map((w, i) => {
                 const r = w.result;
                 return (
-                  <tr key={w.id} onClick={() => onEditWeek(w.id)} style={{ cursor: 'pointer' }}>
+                  <tr key={w.id} onClick={readOnly ? undefined : () => onEditWeek(w.id)} style={{ cursor: readOnly ? 'default' : 'pointer' }}>
                     <td style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{i + 1}</td>
                     <td style={{ fontWeight: 600 }}>{w.track || w.raceName}</td>
                     <td className="num" style={{ color: r.billPts > r.donPts ? 'var(--blue-light)' : 'var(--text-muted)' }}>{r.billPts.toFixed(1)}</td>
@@ -161,7 +281,7 @@ export default function History({ weeks, onEditWeek }) {
                         : <span style={{ color: 'var(--red)' }}>Don +${Math.abs(w.runningTotal)}</span>}
                     </td>
                     <td onClick={e => e.stopPropagation()}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => onEditWeek(w.id)}>View</button>
+                      {!readOnly && <button className="btn btn-ghost btn-sm" onClick={() => onEditWeek(w.id)}>View</button>}
                     </td>
                   </tr>
                 );

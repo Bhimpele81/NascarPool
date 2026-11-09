@@ -74,7 +74,15 @@ Live at https://nascarpool.onrender.com. No build is failing and no data is miss
 13. **Mobile**: plain-text last names (tap to edit), T10 and Stage columns hidden, shorter tier
     labels, 768px breakpoint, card layout on the dashboard. An earlier complaint that drafters
     were not visible on mobile drove this work.
-14. **Favicons / manifest** for Safari bookmarks; navbar links to the PGA and Bowl pool apps;
+14. **Season archive** (2026-11-08): `appData.season` is the live year and `appData.seasons[year]`
+    holds frozen seasons (`weeks` with results and running totals as computed at archive time,
+    `playoffs`, `archivedAt`). `archiveSeasonData` in `utils/seasons.js` does the move; the button
+    is on the History tab (passcode + confirm). History renders the live season, then a Past
+    Seasons section with a `SeasonRecap` (from `seasonHighlights`) and the same `SeasonView`
+    charts and tables in read-only mode. Header and Dashboard year are now dynamic. 2026 was
+    archived on 2026-11-08; a pre-archive copy of the Supabase row is at
+    `~/Documents/NascarPool-backup-before-2026-archive.json`.
+15. **Favicons / manifest** for Safari bookmarks; navbar links to the PGA and Bowl pool apps;
     README rewritten to cover everything.
 
 ## Operations
